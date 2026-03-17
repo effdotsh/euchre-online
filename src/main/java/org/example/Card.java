@@ -1,5 +1,8 @@
 package org.example;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Card {
     private final Suit suit;
     private final Rank rank;
@@ -36,8 +39,8 @@ public class Card {
         }
 
         if (suit == trump) {
-            int TRUMP_BONUS = 50;
-            return this.rank.getValue() + TRUMP_BONUS;
+            int TRUMP_PRIORITY_BONUS = 50;
+            return this.rank.getValue() + TRUMP_PRIORITY_BONUS;
         }
 
         if (suit == lead) {
@@ -45,5 +48,17 @@ public class Card {
         }
 
         return 0;
+    }
+
+    public static List<Card> createDeck() {
+        List<Card> deck = new ArrayList<>();
+
+        for (Suit suit : Suit.values()) {
+            for (Rank rank : Rank.values()) {
+                deck.add(new Card(suit, rank));
+            }
+        }
+
+        return deck;
     }
 }
