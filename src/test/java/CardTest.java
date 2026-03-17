@@ -66,6 +66,8 @@ public class CardTest {
     @Test
     public void testNonLeadNonTrumpCardHasPriorityZero() {
         Card card = new Card(Suit.DIAMONDS, Rank.ACE);
-        assertEquals(card.getPriority(Suit.SPADES, Suit.HEARTS), 0);
+        Suit trump = Suit.SPADES;
+        Suit lead = Suit.HEARTS;
+        assertEquals(card.getPriority(trump, lead), 0);
     }
 }
