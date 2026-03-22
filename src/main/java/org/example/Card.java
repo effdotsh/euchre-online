@@ -30,17 +30,13 @@ public class Card {
      */
     public int getPriority(Suit trump, Suit lead) {
         if (suit == trump && rank == Rank.JACK) {
-            int LEFT_BOWER_PRIORITY = 100;
-            return LEFT_BOWER_PRIORITY;
+            return Priority.RIGHT_BOWER.getValue();
         }
         if (suit.getColor() == trump.getColor() && rank == Rank.JACK) {
-            int RIGHT_BOWER_PRIORITY = 99;
-            return RIGHT_BOWER_PRIORITY;
+            return Priority.LEFT_BOWER.getValue();
         }
-
         if (suit == trump) {
-            int TRUMP_PRIORITY_BONUS = 50;
-            return this.rank.getValue() + TRUMP_PRIORITY_BONUS;
+            return this.rank.getValue() + Priority.TRUMP.getValue();
         }
 
         if (suit == lead) {
@@ -61,4 +57,31 @@ public class Card {
 
         return deck;
     }
+
+    public Suit getEffectiveSuit(Suit trump) {
+        if (trump != null
+                && rank == Rank.JACK
+                && suit != trump
+                && suit.getColor() == trump.getColor()) {
+            return trump;
+        }
+        return suit;
+    }
+    private enum Priority {
+        RIGHT_BOWER(100),
+        LEFT_BOWER(99),
+        TRUMP(50);
+
+        private final int value;
+
+        Priority(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
 }
+
+

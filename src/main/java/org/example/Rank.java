@@ -7,9 +7,7 @@ public enum Rank {
     QUEEN(12),
     JACK(11),
     TEN(10),
-    NINE(9),
-    EIGHT(8),
-    SEVEN(7);
+    NINE(9);
 
     private final int value;
 
