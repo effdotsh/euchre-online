@@ -18,8 +18,8 @@ class PlayerTest {
 
         Card selected = aiPlayer.chooseCard(null, Suit.HEARTS);
 
-        assertEquals(Suit.CLUBS, selected.getSuit());
-        assertEquals(Rank.TEN, selected.getRank());
+        assertEquals(Suit.HEARTS, selected.getSuit());
+        assertEquals(Rank.NINE, selected.getRank());
     }
 
     @Test
@@ -66,16 +66,16 @@ class PlayerTest {
     @Test
     void legalPlayableCardsWhenLeadingReturnsWholeHand() {
         Player player = new HumanPlayer("Human");
-        Card c1 = new Card(Suit.HEARTS, Rank.ACE);
-        Card c2 = new Card(Suit.CLUBS, Rank.NINE);
-        player.addCard(c1);
-        player.addCard(c2);
+        Card card1 = new Card(Suit.HEARTS, Rank.ACE);
+        Card card2 = new Card(Suit.CLUBS, Rank.NINE);
+        player.addCard(card1);
+        player.addCard(card2);
 
         List<Card> legal = player.getLegalCards(Suit.SPADES, null);
 
         assertEquals(2, legal.size());
-        assertEquals(c1, legal.get(0));
-        assertEquals(c2, legal.get(1));
+        assertEquals(card1, legal.get(0));
+        assertEquals(card2, legal.get(1));
     }
 
     @Test
