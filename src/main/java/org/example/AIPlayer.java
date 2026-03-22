@@ -16,7 +16,8 @@ public class AIPlayer extends Player {
         this.random = Objects.requireNonNull(random, "random cannot be null");
     }
 
-    public Card chooseCard(Suit ledSuit, Suit trump) {
+    @Override
+    public Card chooseCard(Suit trump, Suit ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         if (legalCards.isEmpty()) {
             throw new IllegalStateException("No legal cards available");

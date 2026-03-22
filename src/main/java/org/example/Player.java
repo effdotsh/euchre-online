@@ -41,5 +41,5 @@ public abstract class Player {
     }
 
 
-    public abstract Card chooseCard(Suit ledSuit, Suit trump);
+    public abstract Card chooseCard(Suit trump, Suit ledSuit);
 }
