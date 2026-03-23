@@ -4,8 +4,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerTest {
 
@@ -16,7 +15,7 @@ class PlayerTest {
         aiPlayer.addCard(new Card(Suit.SPADES, Rank.ACE));
         aiPlayer.addCard(new Card(Suit.CLUBS, Rank.TEN));
 
-        Card selected = aiPlayer.chooseCard(null, Suit.HEARTS);
+        Card selected = aiPlayer.playCard(null, Suit.HEARTS);
 
         assertEquals(Suit.HEARTS, selected.getSuit());
         assertEquals(Rank.NINE, selected.getRank());
@@ -26,7 +25,7 @@ class PlayerTest {
     void aiThrowsWhenNoLegalCards() {
         AIPlayer aiPlayer = new AIPlayer("AI");
 
-        assertThrows(IllegalStateException.class, () -> aiPlayer.chooseCard(null, Suit.HEARTS));
+        assertThrows(IllegalStateException.class, () -> aiPlayer.playCard(null, Suit.HEARTS));
     }
 
     @Test
@@ -57,7 +56,7 @@ class PlayerTest {
         human.addCard(new Card(Suit.HEARTS, Rank.KING));
         human.addCard(new Card(Suit.SPADES, Rank.NINE));
 
-        Card selected = human.chooseCard(null, Suit.CLUBS);
+        Card selected = human.playCard(null, Suit.CLUBS);
 
         assertEquals(Suit.HEARTS, selected.getSuit());
         assertEquals(Rank.KING, selected.getRank());
@@ -119,5 +118,33 @@ class PlayerTest {
 
         assertEquals(1, legal.size());
         assertEquals(leftBower, legal.getFirst());
+    }
+
+    @Test
+    void playCardRemovesCardFromHand() {
+        Player player = new AIPlayer("Test", new Random(42));
+        player.setHand(new java.util.ArrayList<>(List.of(
+                new Card(Suit.HEARTS, Rank.ACE),
+                new Card(Suit.SPADES, Rank.KING),
+                new Card(Suit.CLUBS, Rank.NINE)
+        )));
+
+        Card played = player.playCard(Suit.HEARTS, null);
+        assertNotNull(played);
+        assertEquals(2, player.getHand().size());
+        assertFalse(player.getHand().contains(played));
+    }
+
+    @Test
+    void setHandReplacesExistingHand() {
+        Player player = new AIPlayer("Test");
+        player.addCard(new Card(Suit.HEARTS, Rank.ACE));
+        assertEquals(1, player.getHand().size());
+
+        player.setHand(new java.util.ArrayList<>(List.of(
+                new Card(Suit.CLUBS, Rank.NINE),
+                new Card(Suit.SPADES, Rank.KING)
+        )));
+        assertEquals(2, player.getHand().size());
     }
 }

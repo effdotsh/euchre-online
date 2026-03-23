@@ -33,6 +33,8 @@ public class Euchre {
     private void resetHand() {
         dealerIdx = (dealerIdx + 1) % NUM_PLAYERS;
         leaderIdx = (dealerIdx + 1) % NUM_PLAYERS;
+        blueTricks = 0;
+        redTricks = 0;
         deck = Deck.createDeck();
         for (Player player : players) {
             player.setHand(deck.draw(NUM_CARDS_PER_HAND));
@@ -103,7 +105,7 @@ public class Euchre {
             trickCards.set(playerIdx, chosenCard);
 
             if (playerIdx == leaderIdx) {
-                suitLead = chosenCard.getSuit();
+                suitLead = chosenCard.getEffectiveSuit(trump);
             }
             System.out.println(player.getName() + " played " + chosenCard);
         }

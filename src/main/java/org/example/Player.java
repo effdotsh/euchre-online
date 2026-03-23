@@ -46,7 +46,7 @@ public abstract class Player {
 
     public final Card playCard(Suit trump, Suit ledSuit) {
         Card chosenCard = chooseCard(trump, ledSuit);
-        hand.remove(chosenCard);
+        removeCard(chosenCard);
         return chosenCard;
     }
 
