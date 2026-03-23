@@ -47,3 +47,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/.idea/copilot.data.migration.edit.xml
+/.idea/copilot.data.migration.agent.xml
+/.idea/workspace.xml
