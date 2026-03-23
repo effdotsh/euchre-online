@@ -127,6 +127,7 @@ public class Euchre {
                 trump = upCard.getSuit();
                 callerIdx = playerIdx;
                 System.out.println(player.getName() + " ordered up");
+                //todo: the caller should get the upcard and be prompted to discard a card
                 return;
             }
             System.out.println(player.getName() + " did not order up");
