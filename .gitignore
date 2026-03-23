@@ -17,11 +17,11 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-codeStyleConfig.xml
-copilot.data.migration.ask2agent.xml
-gradle.xml
-misc.xml
-vcs.xml
+.idea/*
+!.idea/gradle.xml
+!.idea/vcs.xml
+!.idea/codeStyles/
+!.idea/runConfigurations/
 
 ### Eclipse ###
 .apt_generated

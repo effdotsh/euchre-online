@@ -1,8 +1,10 @@
 import org.example.Card;
+import org.example.Deck;
 import org.example.Rank;
 import org.example.Suit;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,36 +33,36 @@ public class CardTest {
     public void testLeftBowerHasHighestPriority() {
         Suit trump = Suit.SPADES;
         Suit lead = Suit.HEARTS;
-        List<Card> deck = Card.createDeck();
-        Collections.shuffle(deck);
-        Collections.sort(deck, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
-        assertEquals(deck.getFirst().getSuit(), trump);
-        assertEquals(deck.getFirst().getRank(), Rank.JACK);
+        Deck deck = Deck.createDeck();
+        List<Card> cards = new ArrayList<>(deck.view());
+        Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
+        assertEquals(cards.getFirst().getSuit(), trump);
+        assertEquals(cards.getFirst().getRank(), Rank.JACK);
     }
 
     @Test
     public void testRightBowerHasSecondHighestPriority() {
         Suit trump = Suit.CLUBS;
         Suit lead = Suit.SPADES;
-        List<Card> deck = Card.createDeck();
-        Collections.shuffle(deck);
-        Collections.sort(deck, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
+        Deck deck = Deck.createDeck();
+        List<Card> cards = new ArrayList<>(deck.view());
+        Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
         int SECOND_POSITION = 1;
-        assertNotEquals(trump, deck.get(SECOND_POSITION).getSuit());
-        assertEquals(deck.get(SECOND_POSITION).getSuit().getColor(), trump.getColor());
-        assertEquals(deck.get(SECOND_POSITION).getRank(), Rank.JACK);
+        assertNotEquals(trump, cards.get(SECOND_POSITION).getSuit());
+        assertEquals(cards.get(SECOND_POSITION).getSuit().getColor(), trump.getColor());
+        assertEquals(cards.get(SECOND_POSITION).getRank(), Rank.JACK);
     }
 
     @Test
     public void testAceOfTrumpThirdHighestPriority() {
         Suit trump = Suit.DIAMONDS;
         Suit lead = Suit.SPADES;
-        List<Card> deck = Card.createDeck();
-        Collections.shuffle(deck);
-        Collections.sort(deck, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
+        Deck deck = Deck.createDeck();
+        List<Card> cards = new ArrayList<>(deck.view());
+        Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
         int THIRD_POSITION = 2;
-        assertEquals(deck.getFirst().getSuit(), trump);
-        assertEquals(deck.get(THIRD_POSITION).getRank(), Rank.ACE);
+        assertEquals(cards.getFirst().getSuit(), trump);
+        assertEquals(cards.get(THIRD_POSITION).getRank(), Rank.ACE);
     }
 
     @Test

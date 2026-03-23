@@ -6,7 +6,7 @@ import java.util.List;
 
 public abstract class Player {
     private final String name;
-    private final List<Card> hand;
+    private List<Card> hand;
 
     protected Player(String name) {
         this.name = name;
@@ -15,6 +15,10 @@ public abstract class Player {
 
     public List<Card> getHand() {
         return Collections.unmodifiableList(hand);
+    }
+
+    public void setHand(List<Card> cards) {
+        hand = cards;
     }
 
     public void addCard(Card card) {
@@ -33,13 +37,23 @@ public abstract class Player {
             return List.copyOf(hand);
         }
 
-       List<Card> followSuitCards = hand.stream()
-               .filter(card -> card.getEffectiveSuit(trump) == ledSuit)
-               .toList();
+        List<Card> followSuitCards = hand.stream()
+                .filter(card -> card.getEffectiveSuit(trump) == ledSuit)
+                .toList();
 
         return followSuitCards.isEmpty() ? List.copyOf(hand) : followSuitCards;
     }
 
 
     public abstract Card chooseCard(Suit trump, Suit ledSuit);
+
+    public boolean chooseToOrderUp(Card upCard) {
+        //todo
+        return true;
+    }
+
+    public Suit chooseToCallTrump(boolean dealerIsStuck) {
+        //todo
+        return Suit.SPADES;
+    }
 }
