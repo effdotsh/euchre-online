@@ -30,7 +30,7 @@ public class CardTest {
     }
 
     @Test
-    public void testLeftBowerHasHighestPriority() {
+    public void testRightBowerHasHighestPriority() {
         Suit trump = Suit.SPADES;
         Suit lead = Suit.HEARTS;
         Deck deck = Deck.createDeck();
@@ -41,7 +41,7 @@ public class CardTest {
     }
 
     @Test
-    public void testRightBowerHasSecondHighestPriority() {
+    public void testLeftBowerHasSecondHighestPriority() {
         Suit trump = Suit.CLUBS;
         Suit lead = Suit.SPADES;
         Deck deck = Deck.createDeck();

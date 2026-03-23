@@ -44,8 +44,14 @@ public abstract class Player {
         return followSuitCards.isEmpty() ? List.copyOf(hand) : followSuitCards;
     }
 
+    public final Card playCard(Suit trump, Suit ledSuit) {
+        Card chosenCard = chooseCard(trump, ledSuit);
+        hand.remove(chosenCard);
+        return chosenCard;
+    }
 
-    public abstract Card chooseCard(Suit trump, Suit ledSuit);
+
+    protected abstract Card chooseCard(Suit trump, Suit ledSuit);
 
     public boolean chooseToOrderUp(Card upCard) {
         //todo
@@ -55,5 +61,9 @@ public abstract class Player {
     public Suit chooseToCallTrump(boolean dealerIsStuck) {
         //todo
         return Suit.SPADES;
+    }
+
+    public String getName() {
+        return name;
     }
 }

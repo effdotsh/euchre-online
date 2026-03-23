@@ -18,7 +18,7 @@ public class Card {
     }
 
     /**
-     * in Euchre rules, the top card is the jack of trump (Left Bower). the next top card in the jack of the same color (Right Bower).
+     * in Euchre rules, the top card is the jack of trump (Right Bower). the next top card in the jack of the same color (Left Bower).
      * The next best card is the ace of the suit lead, following that suit in descending order.
      *
      * @param trump The trump suit for the game
