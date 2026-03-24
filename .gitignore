@@ -17,11 +17,10 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-codeStyleConfig.xml
-copilot.data.migration.ask2agent.xml
-gradle.xml
-misc.xml
-vcs.xml
+#https://intellij-support.jetbrains.com/hc/en-us/articles/206544839-How-to-manage-projects-under-Version-Control-Systems
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf/
 
 ### Eclipse ###
 .apt_generated

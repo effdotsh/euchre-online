@@ -1,17 +1,18 @@
 import org.example.Card;
+import org.example.Deck;
 import org.example.Rank;
 import org.example.Suit;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CardTest {
     @Test
-    public void testCardStoresSuitAndRank() {
+    public void cardStoresSuitAndRank() {
         Card card1 = new Card(Suit.HEARTS, Rank.ACE);
         assertEquals(card1.getSuit(), Suit.HEARTS);
         assertEquals(card1.getRank(), Rank.ACE);
@@ -28,46 +29,102 @@ public class CardTest {
     }
 
     @Test
-    public void testLeftBowerHasHighestPriority() {
+    public void rightBowerHasHighestPriority() {
         Suit trump = Suit.SPADES;
         Suit lead = Suit.HEARTS;
-        List<Card> deck = Card.createDeck();
-        Collections.shuffle(deck);
-        Collections.sort(deck, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
-        assertEquals(deck.getFirst().getSuit(), trump);
-        assertEquals(deck.getFirst().getRank(), Rank.JACK);
+        Deck deck = Deck.createDeck();
+        List<Card> cards = new ArrayList<>(deck.view());
+        Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
+        assertEquals(cards.getFirst().getSuit(), trump);
+        assertEquals(cards.getFirst().getRank(), Rank.JACK);
     }
 
     @Test
-    public void testRightBowerHasSecondHighestPriority() {
+    public void leftBowerHasSecondHighestPriority() {
         Suit trump = Suit.CLUBS;
         Suit lead = Suit.SPADES;
-        List<Card> deck = Card.createDeck();
-        Collections.shuffle(deck);
-        Collections.sort(deck, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
+        Deck deck = Deck.createDeck();
+        List<Card> cards = new ArrayList<>(deck.view());
+        Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
         int SECOND_POSITION = 1;
-        assertNotEquals(trump, deck.get(SECOND_POSITION).getSuit());
-        assertEquals(deck.get(SECOND_POSITION).getSuit().getColor(), trump.getColor());
-        assertEquals(deck.get(SECOND_POSITION).getRank(), Rank.JACK);
+        assertNotEquals(trump, cards.get(SECOND_POSITION).getSuit());
+        assertEquals(cards.get(SECOND_POSITION).getSuit().getColor(), trump.getColor());
+        assertEquals(cards.get(SECOND_POSITION).getRank(), Rank.JACK);
     }
 
     @Test
-    public void testAceOfTrumpThirdHighestPriority() {
+    public void aceOfTrumpThirdHighestPriority() {
         Suit trump = Suit.DIAMONDS;
         Suit lead = Suit.SPADES;
-        List<Card> deck = Card.createDeck();
-        Collections.shuffle(deck);
-        Collections.sort(deck, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
+        Deck deck = Deck.createDeck();
+        List<Card> cards = new ArrayList<>(deck.view());
+        Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
         int THIRD_POSITION = 2;
-        assertEquals(deck.getFirst().getSuit(), trump);
-        assertEquals(deck.get(THIRD_POSITION).getRank(), Rank.ACE);
+        assertEquals(cards.getFirst().getSuit(), trump);
+        assertEquals(cards.get(THIRD_POSITION).getRank(), Rank.ACE);
     }
 
     @Test
-    public void testNonLeadNonTrumpCardHasPriorityZero() {
+    public void nonLeadNonTrumpCardHasPriorityZero() {
         Card card = new Card(Suit.DIAMONDS, Rank.ACE);
         Suit trump = Suit.SPADES;
         Suit lead = Suit.HEARTS;
         assertEquals(card.getPriority(trump, lead), 0);
+    }
+
+    @Test
+    void trumpCardBeatsSuitLedCard() {
+        Card trumpCard = new Card(Suit.CLUBS, Rank.NINE);
+        Card leadCard = new Card(Suit.HEARTS, Rank.ACE);
+        Suit trump = Suit.CLUBS;
+        Suit lead = Suit.HEARTS;
+
+        assertTrue(trumpCard.getPriority(trump, lead) > leadCard.getPriority(trump, lead));
+    }
+
+    @Test
+    void higherTrumpBeatsLowerTrump() {
+        Card highTrump = new Card(Suit.CLUBS, Rank.ACE);
+        Card lowTrump = new Card(Suit.CLUBS, Rank.NINE);
+        Suit trump = Suit.CLUBS;
+        Suit lead = Suit.HEARTS;
+
+        assertTrue(highTrump.getPriority(trump, lead) > lowTrump.getPriority(trump, lead));
+    }
+
+    @Test
+    void rightBowerBeatsLeftBower() {
+        Card rightBower = new Card(Suit.CLUBS, Rank.JACK);
+        Card leftBower = new Card(Suit.SPADES, Rank.JACK);
+        Suit trump = Suit.CLUBS;
+        Suit lead = Suit.HEARTS;
+
+        assertTrue(rightBower.getPriority(trump, lead) > leftBower.getPriority(trump, lead));
+    }
+
+    @Test
+    void leftBowerBeatsAceOfTrump() {
+        Card leftBower = new Card(Suit.SPADES, Rank.JACK);
+        Card aceOfTrump = new Card(Suit.CLUBS, Rank.ACE);
+        Suit trump = Suit.CLUBS;
+        Suit lead = Suit.HEARTS;
+
+        assertTrue(leftBower.getPriority(trump, lead) > aceOfTrump.getPriority(trump, lead));
+    }
+
+    @Test
+    void leftBowerEffectiveSuitIsTrump() {
+        Suit trump = Suit.CLUBS;
+        Card leftBower = new Card(Suit.SPADES, Rank.JACK);
+        assertEquals(Suit.SPADES, leftBower.getSuit());
+        assertEquals(trump, leftBower.getEffectiveSuit(trump));
+    }
+
+
+    @Test
+    void cardToStringFormatsCorrectly() {
+        assertEquals("A♥", new Card(Suit.HEARTS, Rank.ACE).toString());
+        assertEquals("10♠", new Card(Suit.SPADES, Rank.TEN).toString());
+        assertEquals("J♣", new Card(Suit.CLUBS, Rank.JACK).toString());
     }
 }

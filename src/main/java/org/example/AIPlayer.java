@@ -17,7 +17,7 @@ public class AIPlayer extends Player {
     }
 
     @Override
-    public Card chooseCard(Suit trump, Suit ledSuit) {
+    protected Card chooseCard(Suit trump, Suit ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         if (legalCards.isEmpty()) {
             throw new IllegalStateException("No legal cards available");

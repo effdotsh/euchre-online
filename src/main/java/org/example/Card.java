@@ -1,8 +1,5 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Card {
     private final Suit suit;
     private final Rank rank;
@@ -21,7 +18,7 @@ public class Card {
     }
 
     /**
-     * in Euchre rules, the top card is the jack of trump (Left Bower). the next top card in the jack of the same color (Right Bower).
+     * in Euchre rules, the top card is the jack of trump (Right Bower). the next top card in the jack of the same color (Left Bower).
      * The next best card is the ace of the suit lead, following that suit in descending order.
      *
      * @param trump The trump suit for the game
@@ -46,18 +43,6 @@ public class Card {
         return 0;
     }
 
-    public static List<Card> createDeck() {
-        List<Card> deck = new ArrayList<>();
-
-        for (Suit suit : Suit.values()) {
-            for (Rank rank : Rank.values()) {
-                deck.add(new Card(suit, rank));
-            }
-        }
-
-        return deck;
-    }
-
     public Suit getEffectiveSuit(Suit trump) {
         if (trump != null
                 && rank == Rank.JACK
@@ -67,6 +52,7 @@ public class Card {
         }
         return suit;
     }
+
     private enum Priority {
         RIGHT_BOWER(100),
         LEFT_BOWER(99),
@@ -81,6 +67,11 @@ public class Card {
         public int getValue() {
             return value;
         }
+    }
+
+    @Override
+    public String toString() {
+        return rank.toString() + suit.toString();
     }
 }
 
