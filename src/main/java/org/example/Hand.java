@@ -1,6 +1,8 @@
 package org.example;
 
 
+import java.util.Optional;
+
 import static org.example.Euchre.NUM_PLAYERS;
 
 public class Hand {
@@ -75,7 +77,7 @@ public class Hand {
 
     private int playTrick() {
         Card[] trickCards = new Card[NUM_PLAYERS];
-        Suit suitLead = null;
+        Optional<Suit> suitLead = Optional.empty();
         for (int offset = 0; offset < NUM_PLAYERS; offset++) {
             int playerIdx = (leaderIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
@@ -83,7 +85,7 @@ public class Hand {
             trickCards[playerIdx] = chosenCard;
 
             if (playerIdx == leaderIdx) {
-                suitLead = chosenCard.getEffectiveSuit(trump);
+                suitLead = Optional.of(chosenCard.getEffectiveSuit(trump));
             }
             System.out.println(player.getName() + " played " + chosenCard);
         }
@@ -101,6 +103,36 @@ public class Hand {
     }
 
     private void selectCallerAndTrump() {
+        Optional<Card> upCard = firstRoundSelectCallerAndTrump();
+
+        upCard.ifPresent(this::secondRoundSelectCallerAndTrump);
+
+    }
+
+    private void secondRoundSelectCallerAndTrump(Card upCard) {
+        for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
+            int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
+            Player player = players[playerIdx];
+
+            boolean dealerIsStuck = playerIdx == dealerIdx;
+            Optional<Suit> calledSuit = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
+
+            if (calledSuit.isEmpty()) {
+                System.out.println(player.getName() + " did not choose a suit");
+                continue;
+            }
+            if (calledSuit.get() == upCard.getSuit()) {
+                throw new RuntimeException("You cannot call the same suit as the up card");
+            }
+
+            trump = calledSuit.get();
+            callerIdx = playerIdx;
+            System.out.println(player.getName() + " chose " + calledSuit);
+
+        }
+    }
+
+    private Optional<Card> firstRoundSelectCallerAndTrump() {
         Card upCard = deck.draw();
 
         System.out.println(upCard + " is the up card");
@@ -108,38 +140,19 @@ public class Hand {
             int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
 
-            if (player.chooseToOrderUp(upCard)) {
+
+            Optional<Card> discardedCardFromOrderingUp = player.chooseToOrderUp(upCard);
+            if (discardedCardFromOrderingUp.isPresent()) {
                 trump = upCard.getSuit();
                 callerIdx = playerIdx;
                 System.out.println(player.getName() + " ordered up");
-                //todo: the caller should get the upcard and be prompted to discard a card
-                return;
+                player.addCard(upCard);
+                player.removeCard(discardedCardFromOrderingUp.get());
+                return Optional.empty();
             }
             System.out.println(player.getName() + " did not order up");
 
         }
-
-        for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
-            int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
-            Player player = players[playerIdx];
-
-            boolean dealerIsStuck = playerIdx == dealerIdx;
-            Suit calledSuit = player.chooseToCallTrump(dealerIsStuck);
-
-            //todo stop players from calling the upcard suit
-            if (calledSuit == null) {
-                System.out.println(player.getName() + " did not choose a suit");
-                continue;
-            }
-            if (calledSuit == upCard.getSuit()) {
-                throw new RuntimeException("You cannot call the same suit as the up card");
-            }
-
-            trump = calledSuit;
-            callerIdx = playerIdx;
-            System.out.println(player.getName() + " chose " + calledSuit);
-
-            return;
-        }
+        return Optional.of(upCard);
     }
 }

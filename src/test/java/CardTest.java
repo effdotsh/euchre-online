@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,7 +32,7 @@ public class CardTest {
     @Test
     public void rightBowerHasHighestPriority() {
         Suit trump = Suit.SPADES;
-        Suit lead = Suit.HEARTS;
+        Optional<Suit> lead = Optional.of(Suit.HEARTS);
         Deck deck = Deck.createDeck();
         List<Card> cards = new ArrayList<>(deck.view());
         Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
@@ -42,7 +43,7 @@ public class CardTest {
     @Test
     public void leftBowerHasSecondHighestPriority() {
         Suit trump = Suit.CLUBS;
-        Suit lead = Suit.SPADES;
+        Optional<Suit> lead = Optional.of(Suit.SPADES);
         Deck deck = Deck.createDeck();
         List<Card> cards = new ArrayList<>(deck.view());
         Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
@@ -55,7 +56,7 @@ public class CardTest {
     @Test
     public void aceOfTrumpThirdHighestPriority() {
         Suit trump = Suit.DIAMONDS;
-        Suit lead = Suit.SPADES;
+        Optional<Suit> lead = Optional.of(Suit.SPADES);
         Deck deck = Deck.createDeck();
         List<Card> cards = new ArrayList<>(deck.view());
         Collections.sort(cards, (card1, card2) -> card2.getPriority(trump, lead) - card1.getPriority(trump, lead));
@@ -68,7 +69,7 @@ public class CardTest {
     public void nonLeadNonTrumpCardHasPriorityZero() {
         Card card = new Card(Suit.DIAMONDS, Rank.ACE);
         Suit trump = Suit.SPADES;
-        Suit lead = Suit.HEARTS;
+        Optional<Suit> lead = Optional.of(Suit.HEARTS);
         assertEquals(card.getPriority(trump, lead), 0);
     }
 
@@ -77,7 +78,7 @@ public class CardTest {
         Card trumpCard = new Card(Suit.CLUBS, Rank.NINE);
         Card leadCard = new Card(Suit.HEARTS, Rank.ACE);
         Suit trump = Suit.CLUBS;
-        Suit lead = Suit.HEARTS;
+        Optional<Suit> lead = Optional.of(Suit.HEARTS);
 
         assertTrue(trumpCard.getPriority(trump, lead) > leadCard.getPriority(trump, lead));
     }
@@ -87,7 +88,7 @@ public class CardTest {
         Card highTrump = new Card(Suit.CLUBS, Rank.ACE);
         Card lowTrump = new Card(Suit.CLUBS, Rank.NINE);
         Suit trump = Suit.CLUBS;
-        Suit lead = Suit.HEARTS;
+        Optional<Suit> lead = Optional.of(Suit.HEARTS);
 
         assertTrue(highTrump.getPriority(trump, lead) > lowTrump.getPriority(trump, lead));
     }
@@ -97,7 +98,7 @@ public class CardTest {
         Card rightBower = new Card(Suit.CLUBS, Rank.JACK);
         Card leftBower = new Card(Suit.SPADES, Rank.JACK);
         Suit trump = Suit.CLUBS;
-        Suit lead = Suit.HEARTS;
+        Optional<Suit> lead = Optional.of(Suit.HEARTS);
 
         assertTrue(rightBower.getPriority(trump, lead) > leftBower.getPriority(trump, lead));
     }
@@ -107,7 +108,7 @@ public class CardTest {
         Card leftBower = new Card(Suit.SPADES, Rank.JACK);
         Card aceOfTrump = new Card(Suit.CLUBS, Rank.ACE);
         Suit trump = Suit.CLUBS;
-        Suit lead = Suit.HEARTS;
+        Optional<Suit> lead = Optional.of(Suit.HEARTS);
 
         assertTrue(leftBower.getPriority(trump, lead) > aceOfTrump.getPriority(trump, lead));
     }

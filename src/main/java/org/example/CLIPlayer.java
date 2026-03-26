@@ -1,0 +1,79 @@
+package org.example;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class CLIPlayer extends Player {
+    public CLIPlayer(String name) {
+        super(name);
+    }
+
+    protected Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
+        List<Card> legalCards = getLegalCards(trump, ledSuit);
+        System.out.println("Choose a card to play");
+        return chooseCard(legalCards);
+    }
+
+    @Override
+    public Optional<Card> chooseToOrderUp(Card upCard) {
+        System.out.println("Your hand is " + getHand().stream()
+                .map(Card::toString)
+                .collect(Collectors.joining(", ")));
+        System.out.println("Do you want to order up?");
+        String YES = "Yes";
+        List<String> options = List.of(YES, "No");
+        int optionIdx = getChoice(options);
+        if (Objects.equals(options.get(optionIdx), YES)) {
+            System.out.println("Choose a card to discard");
+            Card chosenDiscard = chooseCard(getHand());
+            return Optional.of(chosenDiscard);
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+        List<Suit> suitOptions = Arrays.stream(Suit.values()).filter(s -> s != forbiddenSuit).toList();
+
+        List<String> suitOptionsStrings = new ArrayList<>(suitOptions.stream().map(Suit::toString).toList());
+        if (!dealerIsStuck) {
+            suitOptionsStrings.add("Pass");
+        }
+
+        System.out.println("Choose if you want to call a suit");
+
+        int suitIdx = getChoice(suitOptionsStrings);
+        if (suitIdx < suitOptions.size()) {
+            return Optional.of(suitOptions.get(suitIdx));
+        } else if (dealerIsStuck) {
+            throw new RuntimeException("The dealer is stuck and must pick a suit");
+        }
+
+        return Optional.empty();
+    }
+
+    private Card chooseCard(List<Card> cardOptions) {
+        if (cardOptions.isEmpty()) {
+            throw new IllegalStateException("No legal cards available");
+        }
+
+        List<String> cardStrings = cardOptions.stream().map(Card::toString).toList();
+
+        int choice = getChoice(cardStrings);
+
+        return cardOptions.get(choice);
+    }
+
+    private static int getChoice(List<String> options) {
+        for (int i = 0; i < options.size(); i++) {
+            System.out.println("[" + i + "] " + options.get(i));
+        }
+
+        Scanner scanner = new Scanner(System.in);
+        int choice = scanner.nextInt();
+        return choice;
+    }
+
+
+}

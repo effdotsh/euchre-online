@@ -3,6 +3,7 @@ package org.example;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class Player {
     private final String name;
@@ -29,39 +30,33 @@ public abstract class Player {
         hand.remove(card);
     }
 
-    public List<Card> getLegalCards(Suit trump, Suit ledSuit) {
+    public List<Card> getLegalCards(Suit trump, Optional<Suit> ledSuit) {
         if (hand.isEmpty()) {
             return List.of();
         }
-        if (ledSuit == null) {
+        if (ledSuit.isEmpty()) {
             return List.copyOf(hand);
         }
 
         List<Card> followSuitCards = hand.stream()
-                .filter(card -> card.getEffectiveSuit(trump) == ledSuit)
+                .filter(card -> card.getEffectiveSuit(trump) == ledSuit.get())
                 .toList();
 
         return followSuitCards.isEmpty() ? List.copyOf(hand) : followSuitCards;
     }
 
-    public final Card playCard(Suit trump, Suit ledSuit) {
-        Card chosenCard = chooseCard(trump, ledSuit);
+    public final Card playCard(Suit trump, Optional<Suit> ledSuit) {
+        Card chosenCard = chooseCardToPlay(trump, ledSuit);
         removeCard(chosenCard);
         return chosenCard;
     }
 
 
-    protected abstract Card chooseCard(Suit trump, Suit ledSuit);
+    protected abstract Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit);
 
-    public boolean chooseToOrderUp(Card upCard) {
-        //todo
-        return true;
-    }
+    public abstract Optional<Card> chooseToOrderUp(Card upCard);
 
-    public Suit chooseToCallTrump(boolean dealerIsStuck) {
-        //todo
-        return Suit.SPADES;
-    }
+    public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 
     public String getName() {
         return name;

@@ -3,10 +3,10 @@ package org.example;
 public class Main {
     public static void main(String[] args) {
         Player[] players = {
-                new HumanPlayer("Lance"),
-                new HumanPlayer("Ephram"),
-                new HumanPlayer("Laura"),
-                new HumanPlayer("Olivia")
+                new RandomAIPlayer("Lance"),
+                new CLIPlayer("Ephram"),
+                new RandomAIPlayer("Laura"),
+                new RandomAIPlayer("Olivia")
         };
         Euchre euchre = new Euchre(players);
         euchre.playGame();
