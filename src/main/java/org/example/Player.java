@@ -53,15 +53,9 @@ public abstract class Player {
 
     protected abstract Card chooseCardToPlay(Suit trump, Suit ledSuit);
 
-    public boolean chooseToOrderUp(Card upCard) {
-        //todo
-        return true;
-    }
+    public abstract boolean chooseToOrderUp(Card upCard);
 
-    public Suit chooseToCallTrump(boolean dealerIsStuck) {
-        //todo
-        return Suit.SPADES;
-    }
+    public abstract Suit chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 
     public String getName() {
         return name;

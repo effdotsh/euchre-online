@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -24,4 +25,21 @@ public class RandomAIPlayer extends Player {
         }
         return legalCards.get(random.nextInt(legalCards.size()));
     }
+
+    @Override
+    public boolean chooseToOrderUp(Card upCard) {
+        return (random.nextDouble() > 0.5);
+    }
+
+    @Override
+    public Suit chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+        if (!dealerIsStuck && random.nextDouble() > 0.5) {
+            return null;
+        }
+
+        List<Suit> suitOptions = Arrays.stream(Suit.values()).filter(s -> s != forbiddenSuit).toList();
+        int suitIdx = random.nextInt(suitOptions.size());
+        return suitOptions.get(suitIdx);
+    }
+    
 }

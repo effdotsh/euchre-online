@@ -124,7 +124,7 @@ public class Hand {
             Player player = players[playerIdx];
 
             boolean dealerIsStuck = playerIdx == dealerIdx;
-            Suit calledSuit = player.chooseToCallTrump(dealerIsStuck);
+            Suit calledSuit = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
 
             //todo stop players from calling the upcard suit
             if (calledSuit == null) {
