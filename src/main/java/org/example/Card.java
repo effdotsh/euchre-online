@@ -1,5 +1,7 @@
 package org.example;
 
+import java.util.Optional;
+
 public class Card {
     private final Suit suit;
     private final Rank rank;
@@ -25,7 +27,7 @@ public class Card {
      * @param lead  The suit lead by the first player
      * @return the priority of card. The highest priority card takes the trick
      */
-    public int getPriority(Suit trump, Suit lead) {
+    public int getPriority(Suit trump, Optional<Suit> lead) {
         if (suit == trump && rank == Rank.JACK) {
             return Priority.RIGHT_BOWER.getValue();
         }
@@ -36,7 +38,7 @@ public class Card {
             return this.rank.getValue() + Priority.TRUMP.getValue();
         }
 
-        if (suit == lead) {
+        if (lead.isPresent() && suit == lead.get()) {
             return this.rank.getValue();
         }
 

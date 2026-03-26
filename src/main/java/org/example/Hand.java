@@ -1,6 +1,8 @@
 package org.example;
 
 
+import java.util.Optional;
+
 import static org.example.Euchre.NUM_PLAYERS;
 
 public class Hand {
@@ -75,7 +77,7 @@ public class Hand {
 
     private int playTrick() {
         Card[] trickCards = new Card[NUM_PLAYERS];
-        Suit suitLead = null;
+        Optional<Suit> suitLead = Optional.empty();
         for (int offset = 0; offset < NUM_PLAYERS; offset++) {
             int playerIdx = (leaderIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
@@ -83,7 +85,7 @@ public class Hand {
             trickCards[playerIdx] = chosenCard;
 
             if (playerIdx == leaderIdx) {
-                suitLead = chosenCard.getEffectiveSuit(trump);
+                suitLead = Optional.of(chosenCard.getEffectiveSuit(trump));
             }
             System.out.println(player.getName() + " played " + chosenCard);
         }

@@ -1,6 +1,7 @@
 package org.example;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class CLIPlayer extends Player {
@@ -8,7 +9,7 @@ public class CLIPlayer extends Player {
         super(name);
     }
 
-    protected Card chooseCardToPlay(Suit trump, Suit ledSuit) {
+    protected Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         return chooseCard(legalCards);
     }
