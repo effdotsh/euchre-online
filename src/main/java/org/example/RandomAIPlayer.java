@@ -24,19 +24,22 @@ public class RandomAIPlayer extends Player {
     }
 
     @Override
-    public boolean chooseToOrderUp(Card upCard) {
-        return (random.nextDouble() > 0.5);
+    public Optional<Card> chooseToOrderUp(Card upCard) {
+        if (random.nextBoolean()) {
+            return Optional.of(getHand().getFirst());
+        }
+        return Optional.empty();
     }
 
     @Override
-    public Suit chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
-        if (!dealerIsStuck && random.nextDouble() > 0.5) {
-            return null;
+    public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+        if (!dealerIsStuck && random.nextBoolean()) {
+            return Optional.empty();
         }
 
         List<Suit> suitOptions = Arrays.stream(Suit.values()).filter(s -> s != forbiddenSuit).toList();
         int suitIdx = random.nextInt(suitOptions.size());
-        return suitOptions.get(suitIdx);
+        return Optional.of(suitOptions.get(suitIdx));
     }
 
 }

@@ -54,9 +54,9 @@ public abstract class Player {
 
     protected abstract Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit);
 
-    public abstract boolean chooseToOrderUp(Card upCard);
+    public abstract Optional<Card> chooseToOrderUp(Card upCard);
 
-    public abstract Suit chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
+    public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 
     public String getName() {
         return name;
