@@ -103,27 +103,13 @@ public class Hand {
     }
 
     private void selectCallerAndTrump() {
-        Card upCard = deck.draw();
+        Optional<Card> upCard = firstRoundSelectCallerAndTrump();
 
-        System.out.println(upCard + " is the up card");
-        for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
-            int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
-            Player player = players[playerIdx];
+        upCard.ifPresent(this::secondRoundSelectCallerAndTrump);
 
+    }
 
-            Optional<Card> discardedCardFromOrderingUp = player.chooseToOrderUp(upCard);
-            if (discardedCardFromOrderingUp.isPresent()) {
-                trump = upCard.getSuit();
-                callerIdx = playerIdx;
-                System.out.println(player.getName() + " ordered up");
-                player.addCard(upCard);
-                player.removeCard(discardedCardFromOrderingUp.get());
-                return;
-            }
-            System.out.println(player.getName() + " did not order up");
-
-        }
-
+    private void secondRoundSelectCallerAndTrump(Card upCard) {
         for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
             int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
@@ -143,7 +129,30 @@ public class Hand {
             callerIdx = playerIdx;
             System.out.println(player.getName() + " chose " + calledSuit);
 
-            return;
         }
+    }
+
+    private Optional<Card> firstRoundSelectCallerAndTrump() {
+        Card upCard = deck.draw();
+
+        System.out.println(upCard + " is the up card");
+        for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
+            int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
+            Player player = players[playerIdx];
+
+
+            Optional<Card> discardedCardFromOrderingUp = player.chooseToOrderUp(upCard);
+            if (discardedCardFromOrderingUp.isPresent()) {
+                trump = upCard.getSuit();
+                callerIdx = playerIdx;
+                System.out.println(player.getName() + " ordered up");
+                player.addCard(upCard);
+                player.removeCard(discardedCardFromOrderingUp.get());
+                return Optional.empty();
+            }
+            System.out.println(player.getName() + " did not order up");
+
+        }
+        return Optional.of(upCard);
     }
 }
