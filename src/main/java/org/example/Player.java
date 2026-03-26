@@ -45,13 +45,13 @@ public abstract class Player {
     }
 
     public final Card playCard(Suit trump, Suit ledSuit) {
-        Card chosenCard = chooseCard(trump, ledSuit);
+        Card chosenCard = chooseCardToPlay(trump, ledSuit);
         removeCard(chosenCard);
         return chosenCard;
     }
 
 
-    protected abstract Card chooseCard(Suit trump, Suit ledSuit);
+    protected abstract Card chooseCardToPlay(Suit trump, Suit ledSuit);
 
     public boolean chooseToOrderUp(Card upCard) {
         //todo

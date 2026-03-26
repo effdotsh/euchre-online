@@ -4,20 +4,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-public class AIPlayer extends Player {
+public class RandomAIPlayer extends Player {
     private final Random random;
 
-    public AIPlayer(String name) {
+    public RandomAIPlayer(String name) {
         this(name, new Random());
     }
 
-    public AIPlayer(String name, Random random) {
+    public RandomAIPlayer(String name, Random random) {
         super(name);
         this.random = Objects.requireNonNull(random, "random cannot be null");
     }
 
     @Override
-    protected Card chooseCard(Suit trump, Suit ledSuit) {
+    protected Card chooseCardToPlay(Suit trump, Suit ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         if (legalCards.isEmpty()) {
             throw new IllegalStateException("No legal cards available");
