@@ -49,3 +49,7 @@ bin/
 /.idea/copilot.data.migration.edit.xml
 /.idea/copilot.data.migration.agent.xml
 /.idea/workspace.xml
+.idea/copilot.data.migration.ask2agent.xml
+.gitignore
+.idea/codeStyles/codeStyleConfig.xml
+.metals/metals.lock.db

@@ -1,0 +1,344 @@
+Observer Integration Blueprint for Java Euchre Engine and Pixi React UI
+Date: 2026-03-31
+Audience: Project implementers who need architecture-level guidance without direct code answers
+
+---------------------------------------------------------------------
+1) Scope and Non-Scope
+---------------------------------------------------------------------
+Core principle:
+- The Java engine is the single source of truth.
+- The frontend is a reactive projection of engine state.
+- Every visible UI effect should be explainable by either:
+  - a new snapshot version, or
+  - a specific domain event emitted by the engine.
+
+---------------------------------------------------------------------
+2) Current Code Anchors You Should Reuse
+---------------------------------------------------------------------
+Java side:
+- Game loop orchestration: src/main/java/org/example/Euchre.java
+- Hand lifecycle and trick loop: src/main/java/org/example/Hand.java
+- Player decisions and legal-card filtering: src/main/java/org/example/Player.java
+- Human decision placeholders currently in CLI: src/main/java/org/example/CLIPlayer.java
+- AI decision behavior: src/main/java/org/example/RandomAIPlayer.java
+
+Frontend side:
+- Snapshot/action contract: frontend/src/domain/types.ts
+- Transport client (WebSocket adapter): frontend/src/engine/engineClient.ts
+- Feed hook (observer subscription): frontend/src/hooks/useGameFeed.ts
+- Rendering and interaction: frontend/src/ui/PixiTable.tsx and frontend/src/App.tsx
+
+Important alignment fact:
+- The frontend now has no local game simulation and is ready for engine-driven snapshots.
+- Preserve snapshot versioning and legal action semantics between Java and frontend.
+
+---------------------------------------------------------------------
+3) Observer Pattern Design (High-Level)
+---------------------------------------------------------------------
+Use a two-channel model:
+
+Channel A: State Observer
+- Purpose: deliver full or near-full GameSnapshot views.
+- Trigger: after every state transition that can change rendering or legal actions.
+- Consumer: frontend state store.
+
+Channel B: Domain Event Observer
+- Purpose: deliver discrete event markers for animation/effects timing.
+- Trigger: meaningful moments (card played, trick won, trump selected, hand scored).
+- Consumer: frontend effects layer (transient visuals, sound, highlight pulses).
+
+Why two channels:
+- Snapshot-only is correct but may make effect timing ambiguous.
+- Event-only is lightweight but insufficient for robust rehydration/reconnect.
+- Combining both supports determinism and rich UI behavior.
+
+---------------------------------------------------------------------
+4) Suggested Observer Contracts (Conceptual Only)
+---------------------------------------------------------------------
+Define roles, not implementation:
+
+Role: GameObservable
+- Register/unregister listeners.
+- Publish snapshot changes.
+- Publish domain events.
+
+Role: SnapshotListener
+- Receives a snapshot payload containing version and legal actions.
+
+Role: EventListener
+- Receives event payload with event type, tableId, version, and contextual fields.
+
+Role: CommandGateway
+- Receives user intent commands from transport layer.
+- Validates intent against current legal actions.
+- Applies valid command to engine state.
+- Triggers observer publication after state mutation.
+
+Do not let listeners mutate engine state.
+Listeners should be read-only observers.
+
+---------------------------------------------------------------------
+5) Precise Emission Points in Existing Engine Flow
+---------------------------------------------------------------------
+Map observer emissions to existing lifecycle boundaries.
+
+In Euchre.playGame:
+- Emit GAME_STARTED when match begins.
+- Emit HAND_STARTED after dealer advances and new hand object is ready.
+- Emit SCORE_UPDATED after each hand score is applied to game totals.
+- Emit GAME_COMPLETED once win condition reached.
+
+In Hand.playHand:
+- Emit DEAL_COMPLETED immediately after deal.
+- Emit BIDDING_PHASE_STARTED before first-round order-up loop.
+- Emit TRUMP_SELECTED when caller/trump become final.
+- Emit TRICK_STARTED at each trick iteration before first play.
+- Emit TRICK_COMPLETED once winner is known.
+- Emit HAND_COMPLETED when scoring is finalized.
+
+In Hand.firstRoundSelectCallerAndTrump:
+- Emit UPCARD_REVEALED when up card drawn.
+- Emit TURN_PROMPTED for each active bidding seat.
+- Emit ORDER_UP_ACCEPTED or ORDER_UP_PASSED per decision.
+
+In Hand.secondRoundSelectCallerAndTrump:
+- Emit TURN_PROMPTED for each seat.
+- Emit SUIT_CALLED or SUIT_PASSED per decision.
+- Emit DEALER_STUCK_NOTICE when applicable.
+
+In Hand.playTrick:
+- Emit TURN_PROMPTED for active seat before play.
+- Emit CARD_PLAYED when card is committed.
+- Emit LEAD_SUIT_SET when first card defines trick suit.
+- Emit TRICK_WINNER_DETERMINED after winner evaluation.
+
+After each emission point above:
+- Emit a snapshot update if any frontend-visible state changed.
+
+---------------------------------------------------------------------
+6) Snapshot Field Mapping Plan (Java -> frontend GameSnapshot)
+---------------------------------------------------------------------
+Use the existing frontend contract in frontend/src/domain/types.ts.
+
+tableId:
+- Assign stable id per game table/session.
+
+version:
+- Monotonic integer incremented for every published snapshot.
+- Never decrement or reuse.
+
+phase:
+- HAND_START: after deal and before bidding choices.
+- ORDER_UP: during first-round bidding.
+- CALL_TRUMP: during second-round bidding.
+- PLAY_TRICK: while cards are being played in trick.
+- TRICK_COMPLETE: immediate post-trick winner resolution window.
+- HAND_COMPLETE: post-scoring window.
+
+statusText:
+- Human-readable summary of current state transition.
+- Keep deterministic from events where possible.
+
+dealerSeat, leaderSeat, activeSeat, callerSeat:
+- Derive directly from Hand indices and turn logic.
+
+trump:
+- Null before selection.
+- Set once chosen.
+
+upCard:
+- Present during bidding visibility window.
+- Null once phase transitions require hidden/consumed card behavior.
+
+seats:
+- Include fixed order seat metadata.
+- For active player privacy rules, expose only legal hand detail for owning seat if needed by your policy.
+
+trickWinsBySeat:
+- Increment seat winner count each trick.
+
+trickCards:
+- Four-position array where each index is seat-aligned current trick contribution.
+
+handTricks:
+- Team trick totals in current hand.
+
+gamePoints:
+- Team points accumulated across hands.
+
+legalActions:
+- Must always match activeSeat options only.
+- During card play, include PLAY_CARD actions only for legal cards from Player.getLegalCards.
+- During first round, include ORDER_UP variants relevant to rules and optional alone option if enabled.
+- During second round, include CALL_TRUMP suit options excluding forbidden up-card suit, plus pass when legal.
+
+---------------------------------------------------------------------
+7) Command Ingress Plan (frontend -> Java)
+---------------------------------------------------------------------
+Supported command shapes should align with frontend ActionOption types:
+- PLAY_CARD with card identity
+- ORDER_UP with order boolean and optional alone flag
+- CALL_TRUMP with suit or pass and optional alone flag
+
+Validation pipeline per command:
+1. Verify table id exists and session is authorized.
+2. Verify caller is current active seat.
+3. Verify submitted action exists in current legalActions set for that version.
+4. Reject stale version commands cleanly (client can refresh from latest snapshot).
+5. Apply action atomically.
+6. Publish resulting event plus next snapshot version.
+
+Failure handling:
+- Return structured error reason categories:
+  - stale_version
+  - invalid_turn
+  - illegal_action
+  - unknown_table
+- Frontend should display non-destructive notice and keep latest server snapshot.
+
+---------------------------------------------------------------------
+8) Frontend Observer Wiring Strategy
+---------------------------------------------------------------------
+Current frontend wiring (already implemented):
+- useGameFeed subscribes to observer snapshots and connection status.
+- engineClient is the transport adapter and only sends COMMAND envelopes.
+- App and PixiTable only read snapshot fields and render from them.
+
+Current transport envelope expectations in frontend:
+- Server -> UI snapshot:
+  - type: SNAPSHOT
+  - snapshot: GameSnapshot
+- Server -> UI event (optional for effects):
+  - type: EVENT
+  - eventType, tableId, version, payload
+- UI -> Server command:
+  - type: COMMAND
+  - tableId, expectedVersion, seat, action
+
+Recommended state shape in frontend:
+- currentSnapshot
+- lastEvent
+- connectionStatus
+- pendingCommand
+- commandError
+
+UI effect triggers (examples, not implementation code):
+- On CARD_PLAYED event: animate card movement to trick area.
+- On TRICK_WINNER_DETERMINED event: pulse winning seat HUD.
+- On TRUMP_SELECTED event: highlight trump suit briefly.
+- On HAND_COMPLETED event: animate score increment.
+
+Rule for effects:
+- Effects should subscribe to event stream and reference version to avoid replay mismatch.
+- Rendered card legality and controls should always derive from snapshot.legalActions.
+
+---------------------------------------------------------------------
+9) Concurrency and Lifecycle Safety
+---------------------------------------------------------------------
+Single-writer rule:
+- All game state mutations for a table happen on one serialized execution path.
+
+Observer dispatch policy:
+- Decide sync or async delivery explicitly.
+- If async, preserve ordering by version.
+
+Idempotency:
+- Reconnect clients should request latest snapshot and ignore old event versions.
+
+Session lifecycle:
+- onConnect: send full latest snapshot immediately.
+- onDisconnect: keep table alive per your lobby policy.
+- onReconnect: resume from latest snapshot; optional event backfill by version range.
+
+---------------------------------------------------------------------
+10) Transport-Agnostic API Contract Checklist
+---------------------------------------------------------------------
+Whether you use WebSocket, SSE + HTTP post, or polling, keep these semantics:
+
+Server to client:
+- Snapshot message includes full GameSnapshot and version.
+- Event message includes eventType, tableId, version, timestamp, and minimal context.
+
+Client to server:
+- Command message includes tableId, expectedVersion, playerSeat/session, action payload.
+
+Acknowledge pattern:
+- Accept or reject command with explicit reason.
+- On accept, client waits for next snapshot/event rather than mutating local truth optimistically.
+
+---------------------------------------------------------------------
+11) Privacy and Information Partitioning
+---------------------------------------------------------------------
+If multiplayer realism is required:
+- Do not expose all hands to every client.
+- Build seat-specific snapshot projection from same engine state.
+- Keep public zones shared (trick cards, scores, up card during allowed phases).
+
+If currently single local player:
+- You may expose complete state temporarily for debugging, but mark as temporary and isolate behind dev mode.
+
+---------------------------------------------------------------------
+12) Migration Plan from Mock to Real (Step-by-Step)
+---------------------------------------------------------------------
+Status update:
+- Completed: mock dependency removed from frontend.
+- Completed: UI now uses frontend/src/engine/engineClient.ts and frontend/src/hooks/useGameFeed.ts.
+- Remaining: connect Java observer publisher and command gateway to the defined transport envelopes.
+
+Next integration steps:
+Step 1:
+- Keep frontend/src/domain/types.ts as the contract source for snapshot/action fields.
+
+Step 2:
+- Implement Java snapshot publisher that emits SNAPSHOT envelopes matching GameSnapshot exactly.
+
+Step 3:
+- Implement Java command endpoint/socket consumer for COMMAND envelopes.
+
+Step 4:
+- Apply command validation in engine layer only (turn, legality, version checks).
+
+Step 5:
+- Emit updated snapshots after every accepted state mutation.
+
+Step 6:
+- Optionally emit EVENT envelopes for animation timing and effect cues.
+
+Step 7:
+- Perform end-to-end verification with real transport and remove any temporary placeholder UI copy.
+
+---------------------------------------------------------------------
+13) Verification Matrix You Should Complete
+---------------------------------------------------------------------
+State correctness tests:
+- Dealer rotation across hands is reflected correctly in snapshots.
+- Legal actions per phase exactly match rules.
+- trickWinsBySeat increments at correct seat index.
+- gamePoints and handTricks update at expected boundaries.
+
+Observer ordering tests:
+- For a single action, event and snapshot sequence always arrives in deterministic order.
+- No version gaps for accepted commands.
+
+Frontend behavior tests:
+- UI disables illegal cards from snapshot only.
+- Bidding modal options exactly mirror legalActions.
+- Up-card visibility follows phase transitions.
+
+Resilience tests:
+- Reconnect receives latest consistent snapshot.
+- Stale command rejection path is user-visible and recoverable.
+
+---------------------------------------------------------------------
+14) Common Pitfalls to Avoid
+---------------------------------------------------------------------
+- Mixing UI-only state with engine authority.
+- Emitting events without corresponding snapshot updates when visible state changed.
+- Allowing commands that are not present in current legalActions.
+- Coupling transport DTOs directly to internal mutable domain objects.
+- Failing to include version in both outgoing snapshots and incoming commands.
+- Letting observer listeners mutate game objects.
+
+
+
+Use this as an implementation map and design checklist, then fill in your own project-specific code decisions.
