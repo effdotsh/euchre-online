@@ -43,15 +43,15 @@ public abstract class Player {
     }
 
     public final Card playCard(Suit trump, Optional<Suit> ledSuit) {
-        Card chosenCard = chooseCardToPlay(trump, ledSuit);
+        Card chosenCard = chooseCard(trump, ledSuit);
         removeCard(chosenCard);
         return chosenCard;
     }
 
 
-    protected abstract Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit);
+    protected abstract Card chooseCard(Suit trump, Optional<Suit> ledSuit);
 
-    public abstract Optional<Card> chooseToOrderUp(Card upCard);
+    public abstract boolean chooseToOrderUp(Card upCard);
 
     public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 

@@ -14,7 +14,7 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    protected synchronized Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
+    protected synchronized Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         pendingAction = PendingAction.playCard(legalCards, ledSuit);
         String cardId = awaitSubmission();
@@ -25,15 +25,10 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    public synchronized Optional<Card> chooseToOrderUp(Card upCard) {
+    public synchronized boolean chooseToOrderUp(Card upCard) {
         pendingAction = PendingAction.orderUp(getHand(), upCard);
         String submission = awaitSubmission();
-        if (PendingAction.PASS.equals(submission)) {
-            return Optional.empty();
-        }
-        return getHand().stream()
-                .filter(card -> card.getId().equals(submission))
-                .findFirst();
+        return !PendingAction.PASS.equals(submission);
     }
 
     @Override

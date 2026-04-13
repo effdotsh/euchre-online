@@ -8,14 +8,14 @@ public class CLIPlayer extends Player {
         super(name);
     }
 
-    protected Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
+    protected Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         System.out.println("Choose a card to play");
         return chooseCard(legalCards);
     }
 
     @Override
-    public Optional<Card> chooseToOrderUp(Card upCard) {
+    public boolean chooseToOrderUp(Card upCard) {
         System.out.println("Your hand is " + getHand().stream()
                 .map(Card::toString)
                 .collect(Collectors.joining(", ")));
@@ -23,13 +23,7 @@ public class CLIPlayer extends Player {
         String YES = "Yes";
         List<String> options = List.of(YES, "No");
         int optionIdx = getChoice(options);
-        if (Objects.equals(options.get(optionIdx), YES)) {
-            System.out.println("Choose a card to discard");
-            Card chosenDiscard = chooseCard(getHand());
-            return Optional.of(chosenDiscard);
-        }
-
-        return Optional.empty();
+        return Objects.equals(options.get(optionIdx), YES);
     }
 
     @Override

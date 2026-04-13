@@ -210,13 +210,14 @@ public class Hand {
             Player player = players[playerIdx];
 
 
-            Optional<Card> discardedCardFromOrderingUp = player.chooseToOrderUp(upCard);
-            if (discardedCardFromOrderingUp.isPresent()) {
+            if (player.chooseToOrderUp(upCard)) {
+                Player dealer = players[dealerIdx];
+                dealer.addCard(upCard);
+                Card dealerDiscardedCard = dealer.chooseCard(upCard.getSuit(), Optional.empty());
                 trump = upCard.getSuit();
                 callerIdx = playerIdx;
                 System.out.println(player.getName() + " ordered up");
-                player.addCard(upCard);
-                player.removeCard(discardedCardFromOrderingUp.get());
+                dealer.removeCard(dealerDiscardedCard);
                 pause();
                 return Optional.empty();
             }
