@@ -346,7 +346,7 @@ function drawTable(p, layout) {
 }
 
 function drawSeat(p, player, hand, pendingAction, box, seat) {
-    p.fill(255, 251, 246, seat === "south" ? 242 : 214);
+
     p.rect(box.x, box.y, box.w, box.h, 20);
 
     p.fill(112, 93, 75);
@@ -446,11 +446,6 @@ function drawTrick(p, currentTrick, layout, players) {
     };
 
     if (!currentTrick?.plays?.length) {
-        p.fill(248, 243, 237);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(16);
-        p.text("Waiting for the lead", layout.trickCenterX, layout.trickCenterY + 6);
-        p.textAlign(p.LEFT, p.BASELINE);
         return;
     }
 

@@ -1,11 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class Player {
     private final String name;
@@ -71,5 +66,21 @@ public abstract class Player {
         snapshot.put("handSize", hand.size());
         snapshot.put("hand", hand.stream().map(card -> card.snapshot(trump)).toList());
         return snapshot;
+    }
+
+    public void sortHand(Suit trump) {
+        hand.sort((a, b) -> {
+            int aPriority = a.getPriority(trump, Optional.of(trump));
+            int bPriority = b.getPriority(trump, Optional.of(trump));
+            int priorityDelta = bPriority - aPriority;
+
+            if (priorityDelta > 0) {
+                return 1;
+            } else if (priorityDelta < 0) {
+                return -1;
+            }
+
+            return b.getOrder() - a.getOrder();
+        });
     }
 }

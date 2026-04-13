@@ -1,17 +1,19 @@
 package org.example;
 
 public enum Suit {
-    HEARTS(Color.RED, "♥"),
-    DIAMONDS(Color.RED, "♦"),
-    CLUBS(Color.BLACK, "♣"),
-    SPADES(Color.BLACK, "♠");
+    SPADES(Color.BLACK, "♠", 0),
+    DIAMONDS(Color.RED, "♦", 13),
+    CLUBS(Color.BLACK, "♣", 26),
+    HEARTS(Color.RED, "♥", 39);
 
     private final Color color;
     private final String string;
+    private final int baseOrder;
 
-    Suit(Color color, String string) {
+    Suit(Color color, String string, int order) {
         this.color = color;
         this.string = string;
+        this.baseOrder = order;
     }
 
     @Override
@@ -26,5 +28,9 @@ public enum Suit {
     public enum Color {
         RED,
         BLACK
+    }
+
+    public int getBaseOrder() {
+        return baseOrder;
     }
 }

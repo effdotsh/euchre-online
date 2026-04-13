@@ -71,6 +71,10 @@ public class Card {
         return snapshot;
     }
 
+    public int getOrder() {
+        return suit.getBaseOrder() + rank.getValue();
+    }
+
     private enum Priority {
         RIGHT_BOWER(100),
         LEFT_BOWER(99),

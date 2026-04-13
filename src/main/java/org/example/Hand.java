@@ -1,11 +1,7 @@
 package org.example;
 
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.example.Euchre.NUM_PLAYERS;
 
@@ -173,7 +169,9 @@ public class Hand {
         Optional<Card> upCard = firstRoundSelectCallerAndTrump();
 
         upCard.ifPresent(this::secondRoundSelectCallerAndTrump);
-
+        for (Player player : players) {
+            player.sortHand(trump);
+        }
     }
 
     private void secondRoundSelectCallerAndTrump(Card upCard) {
