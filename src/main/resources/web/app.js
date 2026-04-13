@@ -89,16 +89,19 @@ function formatSuit(suit) {
 }
 
 function seatBadge(player, hand) {
-    if (player.name === hand.dealerName && player.name === hand.callerName) {
-        return "Dealer, Caller";
-    }
+    const roles = [];
     if (player.name === hand.dealerName) {
-        return "Dealer";
+        roles.push("Dealer");
     }
     if (player.name === hand.callerName) {
-        return "Caller";
+        roles.push("Caller");
     }
-    return `${player.handSize} cards`;
+    const tricks = trickLabel(player.trickCount ?? 0);
+    return roles.length === 0 ? tricks : `${roles.join(", ")} • ${tricks}`;
+}
+
+function trickLabel(trickCount) {
+    return `${trickCount} trick${trickCount === 1 ? "" : "s"}`;
 }
 
 function containsPoint(target, x, y) {
@@ -353,8 +356,8 @@ function drawSeat(p, player, hand, pendingAction, box, seat) {
     p.textSize(box.h < 110 ? 18 : 22);
     p.text(player.name, box.x + 14, box.y + 44);
     p.fill(112, 93, 75);
-    p.textSize(14);
-    p.text(seatBadge(player, hand), box.x + 14, box.y + 64);
+    p.textSize(box.h < 110 ? 12 : 14);
+    p.text(seatBadge(player, hand), box.x + 14, box.y + 64, box.w - 28, 32);
 
     if (seat === "south") {
         drawSouthHand(p, player, pendingAction, box);
@@ -434,14 +437,6 @@ function drawTrick(p, currentTrick, layout, players) {
     const trickCardH = layout.mobile ? 82 : 98;
     const trickBoxW = layout.mobile ? 190 : 220;
     const trickBoxH = layout.mobile ? 122 : 132;
-
-    p.fill(245, 238, 226, 210);
-    p.rect(layout.trickCenterX - trickBoxW / 2, layout.trickCenterY - trickBoxH / 2, trickBoxW, trickBoxH, 22);
-    p.fill(245, 240, 233);
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(11);
-    p.text("CURRENT TRICK", layout.trickCenterX, layout.trickCenterY - trickBoxH / 2 + 18);
-    p.textAlign(p.LEFT, p.BASELINE);
 
     const positions = {
         0: { x: layout.trickCenterX - trickCardW / 2, y: layout.trickCenterY - (layout.mobile ? 94 : 112) },

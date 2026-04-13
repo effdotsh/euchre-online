@@ -47,8 +47,13 @@ public class Euchre {
         }
         dealerIdx = (dealerIdx + 1) % NUM_PLAYERS;
         Hand hand = new Hand(players, dealerIdx, actionDelayMillis);
-        hand.start();
         hands.add(hand);
+        try {
+            hand.start();
+        } catch (RuntimeException e) {
+            hands.removeLast();
+            throw e;
+        }
         return hand;
     }
 

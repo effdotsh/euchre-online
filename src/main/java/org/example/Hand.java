@@ -28,6 +28,7 @@ public class Hand {
     private boolean started = false;
     private boolean complete = false;
     private int[] scoredPoints = new int[]{0, 0};
+    private final int[] playerTricks = new int[NUM_PLAYERS];
     private final List<Map<String, Object>> completedTricks = new ArrayList<>();
     private Map<String, Object> currentTrick = emptyTrickSnapshot();
 
@@ -83,6 +84,7 @@ public class Hand {
         } else {
             redTricks++;
         }
+        playerTricks[trickWinnerIdx]++;
         leaderIdx = trickWinnerIdx;
         Player trickWinner = players[trickWinnerIdx];
         currentTrick.put("winnerIdx", trickWinnerIdx);
@@ -242,7 +244,7 @@ public class Hand {
         snapshot.put("redTricks", redTricks);
         snapshot.put("scoredPoints", List.of(scoredPoints[0], scoredPoints[1]));
         snapshot.put("deck", deck.snapshot(trump));
-        snapshot.put("players", List.of(players).stream().map(player -> player.snapshot(trump)).toList());
+        snapshot.put("players", snapshotPlayers());
         snapshot.put("currentTrick", currentTrick);
         snapshot.put("completedTricks", List.copyOf(completedTricks));
         return snapshot;
@@ -264,6 +266,17 @@ public class Hand {
         snapshot.put("winnerIdx", null);
         snapshot.put("winnerName", null);
         return snapshot;
+    }
+
+    private List<Map<String, Object>> snapshotPlayers() {
+        List<Map<String, Object>> snapshots = new ArrayList<>(NUM_PLAYERS);
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            Map<String, Object> playerSnapshot = new LinkedHashMap<>(players[i].snapshot(trump));
+            playerSnapshot.put("playerIdx", i);
+            playerSnapshot.put("trickCount", playerTricks[i]);
+            snapshots.add(playerSnapshot);
+        }
+        return snapshots;
     }
 
     private void pause() {
