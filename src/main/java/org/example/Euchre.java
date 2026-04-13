@@ -1,10 +1,13 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Euchre {
-    private Player[] players;
+    private final Player[] players;
+    private final long actionDelayMillis;
 
     public static final int NUM_PLAYERS = 4;
 
@@ -14,29 +17,94 @@ public class Euchre {
 
     private int bluePoints = 0;
     private int redPoints = 0;
+    private int scoredHandCount = 0;
 
     List<Hand> hands = new ArrayList<>();
 
     public Euchre(Player[] players) {
+        this(players, 0);
+    }
+
+    public Euchre(Player[] players, long actionDelayMillis) {
         this.players = players;
+        this.actionDelayMillis = actionDelayMillis;
     }
 
     public void playGame() {
         while (!isOver()) {
-            dealerIdx = (dealerIdx + 1) % NUM_PLAYERS;
-            Hand hand = new Hand(players, dealerIdx);
-            hands.add(hand);
+            advance();
+        }
+        System.out.println("Blue team points: " + bluePoints);
+        System.out.println("Red team points: " + redPoints);
+    }
 
-            int[] points = hand.playHand();
+    public Hand startNextHand() {
+        if (isOver()) {
+            throw new IllegalStateException("Game is already over");
+        }
+        if (!hands.isEmpty() && !hands.getLast().isComplete()) {
+            throw new IllegalStateException("Current hand must complete before starting the next hand");
+        }
+        dealerIdx = (dealerIdx + 1) % NUM_PLAYERS;
+        Hand hand = new Hand(players, dealerIdx, actionDelayMillis);
+        hands.add(hand);
+        try {
+            hand.start();
+        } catch (RuntimeException e) {
+            hands.removeLast();
+            throw e;
+        }
+        return hand;
+    }
+
+    public void advance() {
+        if (isOver()) {
+            return;
+        }
+
+        if (hands.isEmpty() || scoredHandCount == hands.size()) {
+            startNextHand();
+            return;
+        }
+
+        Hand hand = hands.getLast();
+        if (!hand.isComplete()) {
+            hand.playNextTrick();
+        }
+
+        if (hand.isComplete() && scoredHandCount < hands.size()) {
+            int[] points = hand.getScoredPoints();
             bluePoints += points[0];
             redPoints += points[1];
-
+            scoredHandCount++;
             System.out.println("Blue team points: " + bluePoints);
             System.out.println("Red team points: " + redPoints);
             System.out.println("###########");
         }
-        System.out.println("Blue team points: " + bluePoints);
-        System.out.println("Red team points: " + redPoints);
+    }
+
+    public String snapshot() {
+        return Json.stringify(snapshotData());
+    }
+
+    private Map<String, Object> snapshotData() {
+        Suit trump = currentTrump();
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("game", "Euchre");
+        snapshot.put("isOver", isOver());
+        snapshot.put("dealerIdx", dealerIdx);
+        snapshot.put("dealerName", dealerIdx >= 0 ? players[dealerIdx].getName() : null);
+        snapshot.put("bluePoints", bluePoints);
+        snapshot.put("redPoints", redPoints);
+        snapshot.put("players", List.of(players).stream().map(player -> player.snapshot(trump)).toList());
+        snapshot.put("currentHand", hands.isEmpty() ? null : hands.getLast().snapshot());
+        snapshot.put("handCount", hands.size());
+        snapshot.put("hands", hands.stream().map(Hand::snapshot).toList());
+        return snapshot;
+    }
+
+    private Suit currentTrump() {
+        return hands.isEmpty() ? null : hands.getLast().getTrump();
     }
 
     private boolean isOver() {

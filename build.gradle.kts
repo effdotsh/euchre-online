@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "org.example"
@@ -15,6 +16,17 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+application {
+    mainClass = "org.example.Main"
+}
+
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.register<JavaExec>("runWeb") {
+    group = "application"
+    description = "Runs the Euchre web snapshot server"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "org.example.GameServer"
 }

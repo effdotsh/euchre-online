@@ -1,6 +1,10 @@
 package org.example;
 
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.example.Euchre.NUM_PLAYERS;
@@ -10,41 +14,89 @@ public class Hand {
 
     private final Player[] players;
     private final Deck deck;
+    private final long actionDelayMillis;
 
     private int blueTricks = 0;
     private int redTricks = 0;
 
+    private Card upCard;
     private Suit trump;
 
     private final int dealerIdx;
     private int leaderIdx;
-    private int callerIdx;
+    private int callerIdx = -1;
+    private boolean started = false;
+    private boolean complete = false;
+    private int[] scoredPoints = new int[]{0, 0};
+    private final int[] playerTricks = new int[NUM_PLAYERS];
+    private final List<Map<String, Object>> completedTricks = new ArrayList<>();
+    private Map<String, Object> currentTrick = emptyTrickSnapshot();
 
     public Hand(Player[] players, int dealerIdx) {
+        this(players, dealerIdx, 0);
+    }
+
+    public Hand(Player[] players, int dealerIdx, long actionDelayMillis) {
         this.players = players;
         this.dealerIdx = dealerIdx;
         this.leaderIdx = (dealerIdx + 1) % NUM_PLAYERS;
         this.deck = Deck.createDeck();
+        this.actionDelayMillis = actionDelayMillis;
     }
 
 
     public int[] playHand() {
+        start();
+        while (!isComplete()) {
+            playNextTrick();
+        }
+        return scoredPoints.clone();
+    }
+
+    public void start() {
+        if (started) {
+            return;
+        }
         deal();
         selectCallerAndTrump();
+        started = true;
+    }
 
-        for (int trickIdx = 0; trickIdx < NUM_CARDS_PER_HAND; trickIdx++) {
-            int trickWinnerIdx = playTrick();
-            if ((trickWinnerIdx % 2) == 0) {
-                blueTricks++;
-            } else {
-                redTricks++;
-            }
-            leaderIdx = trickWinnerIdx;
-            Player trickWinner = players[trickWinnerIdx];
-            System.out.println(trickWinner.getName() + " won the trick\n\n");
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
+
+    public void playNextTrick() {
+        if (!started) {
+            throw new IllegalStateException("Hand must be started before playing tricks");
+        }
+        if (complete) {
+            return;
         }
 
-        return scoreHand();
+        int trickWinnerIdx = playTrick();
+        if ((trickWinnerIdx % 2) == 0) {
+            blueTricks++;
+        } else {
+            redTricks++;
+        }
+        playerTricks[trickWinnerIdx]++;
+        leaderIdx = trickWinnerIdx;
+        Player trickWinner = players[trickWinnerIdx];
+        currentTrick.put("winnerIdx", trickWinnerIdx);
+        currentTrick.put("winnerName", trickWinner.getName());
+        completedTricks.add(currentTrick);
+        System.out.println(trickWinner.getName() + " won the trick\n\n");
+        pause();
+
+        if ((blueTricks + redTricks) == NUM_CARDS_PER_HAND) {
+            scoredPoints = scoreHand();
+            complete = true;
+        }
     }
 
     private void deal() {
@@ -78,6 +130,12 @@ public class Hand {
     private int playTrick() {
         Card[] trickCards = new Card[NUM_PLAYERS];
         Optional<Suit> suitLead = Optional.empty();
+        currentTrick = new LinkedHashMap<>();
+        currentTrick.put("leaderIdx", leaderIdx);
+        currentTrick.put("ledSuit", null);
+        currentTrick.put("plays", new ArrayList<Map<String, Object>>());
+        currentTrick.put("winnerIdx", null);
+        currentTrick.put("winnerName", null);
         for (int offset = 0; offset < NUM_PLAYERS; offset++) {
             int playerIdx = (leaderIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
@@ -86,8 +144,17 @@ public class Hand {
 
             if (playerIdx == leaderIdx) {
                 suitLead = Optional.of(chosenCard.getEffectiveSuit(trump));
+                currentTrick.put("ledSuit", suitLead.get().name());
             }
+            Map<String, Object> playSnapshot = new LinkedHashMap<>();
+            playSnapshot.put("playerIdx", playerIdx);
+            playSnapshot.put("playerName", player.getName());
+            playSnapshot.put("card", chosenCard.snapshot(trump));
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> plays = (List<Map<String, Object>>) currentTrick.get("plays");
+            plays.add(playSnapshot);
             System.out.println(player.getName() + " played " + chosenCard);
+            pause();
         }
 
         int trickWinnerIdx = 0;
@@ -119,6 +186,7 @@ public class Hand {
 
             if (calledSuit.isEmpty()) {
                 System.out.println(player.getName() + " did not choose a suit");
+                pause();
                 continue;
             }
             if (calledSuit.get() == upCard.getSuit()) {
@@ -128,14 +196,16 @@ public class Hand {
             trump = calledSuit.get();
             callerIdx = playerIdx;
             System.out.println(player.getName() + " chose " + calledSuit);
-
+            pause();
+            return;
         }
     }
 
     private Optional<Card> firstRoundSelectCallerAndTrump() {
-        Card upCard = deck.draw();
+        upCard = deck.draw();
 
         System.out.println(upCard + " is the up card");
+        pause();
         for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
             int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
@@ -148,11 +218,76 @@ public class Hand {
                 System.out.println(player.getName() + " ordered up");
                 player.addCard(upCard);
                 player.removeCard(discardedCardFromOrderingUp.get());
+                pause();
                 return Optional.empty();
             }
             System.out.println(player.getName() + " did not order up");
+            pause();
 
         }
         return Optional.of(upCard);
+    }
+
+    public Map<String, Object> snapshot() {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("started", started);
+        snapshot.put("complete", complete);
+        snapshot.put("dealerIdx", dealerIdx);
+        snapshot.put("dealerName", players[dealerIdx].getName());
+        snapshot.put("leaderIdx", leaderIdx);
+        snapshot.put("leaderName", players[leaderIdx].getName());
+        snapshot.put("callerIdx", callerIdx);
+        snapshot.put("callerName", callerIdx >= 0 ? players[callerIdx].getName() : null);
+        snapshot.put("trump", trump == null ? null : trump.name());
+        snapshot.put("upCard", upCard == null ? null : upCard.snapshot(trump));
+        snapshot.put("blueTricks", blueTricks);
+        snapshot.put("redTricks", redTricks);
+        snapshot.put("scoredPoints", List.of(scoredPoints[0], scoredPoints[1]));
+        snapshot.put("deck", deck.snapshot(trump));
+        snapshot.put("players", snapshotPlayers());
+        snapshot.put("currentTrick", currentTrick);
+        snapshot.put("completedTricks", List.copyOf(completedTricks));
+        return snapshot;
+    }
+
+    public Suit getTrump() {
+        return trump;
+    }
+
+    public int[] getScoredPoints() {
+        return scoredPoints.clone();
+    }
+
+    private Map<String, Object> emptyTrickSnapshot() {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("leaderIdx", leaderIdx);
+        snapshot.put("ledSuit", null);
+        snapshot.put("plays", List.of());
+        snapshot.put("winnerIdx", null);
+        snapshot.put("winnerName", null);
+        return snapshot;
+    }
+
+    private List<Map<String, Object>> snapshotPlayers() {
+        List<Map<String, Object>> snapshots = new ArrayList<>(NUM_PLAYERS);
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            Map<String, Object> playerSnapshot = new LinkedHashMap<>(players[i].snapshot(trump));
+            playerSnapshot.put("playerIdx", i);
+            playerSnapshot.put("trickCount", playerTricks[i]);
+            snapshots.add(playerSnapshot);
+        }
+        return snapshots;
+    }
+
+    private void pause() {
+        if (actionDelayMillis <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(actionDelayMillis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Hand pacing interrupted", e);
+        }
     }
 }
