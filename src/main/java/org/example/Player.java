@@ -68,16 +68,20 @@ public abstract class Player {
         return snapshot;
     }
 
-    public void sortHand(Suit trump) {
+    public void sortHand(Optional<Suit> trump) {
         hand.sort((a, b) -> {
-            int aPriority = a.getPriority(trump, Optional.of(trump));
-            int bPriority = b.getPriority(trump, Optional.of(trump));
-            int priorityDelta = bPriority - aPriority;
+            if (trump.isPresent()) {
+                Suit chosenTrump = trump.get();
 
-            if (priorityDelta > 0) {
-                return 1;
-            } else if (priorityDelta < 0) {
-                return -1;
+                int aPriority = a.getPriority(chosenTrump, Optional.of(chosenTrump));
+                int bPriority = b.getPriority(chosenTrump, Optional.of(chosenTrump));
+                int priorityDelta = bPriority - aPriority;
+
+                if (priorityDelta > 0) {
+                    return 1;
+                } else if (priorityDelta < 0) {
+                    return -1;
+                }
             }
 
             return b.getOrder() - a.getOrder();

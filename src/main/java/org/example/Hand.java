@@ -98,6 +98,7 @@ public class Hand {
     private void deal() {
         for (Player player : players) {
             player.setHand(deck.draw(NUM_CARDS_PER_HAND));
+            player.sortHand(Optional.empty());
         }
     }
 
@@ -170,7 +171,7 @@ public class Hand {
 
         upCard.ifPresent(this::secondRoundSelectCallerAndTrump);
         for (Player player : players) {
-            player.sortHand(trump);
+            player.sortHand(Optional.of(trump));
         }
     }
 

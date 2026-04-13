@@ -345,8 +345,41 @@ function drawTable(p, layout) {
     p.ellipse(layout.trickCenterX, layout.trickCenterY, layout.tableW * (layout.mobile ? 0.58 : 0.38), layout.tableH * (layout.mobile ? 0.28 : 0.34));
 }
 
-function drawSeat(p, player, hand, pendingAction, box, seat) {
+function isSeatTurn(hand, pendingAction, seat) {
+    const seatIdxByName = {
+        north: 0,
+        east: 1,
+        south: 2,
+        west: 3
+    };
+    const seatIdx = seatIdxByName[seat];
+    if (seatIdx === undefined || !hand || hand.complete) {
+        return false;
+    }
 
+    if (pendingAction) {
+        return seat === "south";
+    }
+
+    if (!hand.started) {
+        return false;
+    }
+
+    const currentTrick = hand.currentTrick;
+    const plays = currentTrick?.plays ?? [];
+    if (currentTrick?.winnerIdx != null || plays.length >= 4) {
+        return false;
+    }
+
+    return ((hand.leaderIdx + plays.length) % 4) === seatIdx;
+}
+
+function drawSeat(p, player, hand, pendingAction, box, seat) {
+    if (isSeatTurn(hand, pendingAction, seat)) {
+        p.fill(255, 226, 226, seat === "south" ? 246 : 222);
+    } else {
+        p.fill(255, 251, 246, seat === "south" ? 242 : 214);
+    }
     p.rect(box.x, box.y, box.w, box.h, 20);
 
     p.fill(112, 93, 75);
