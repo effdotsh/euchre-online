@@ -1,4 +1,5 @@
 import org.example.Euchre;
+import org.example.Hand;
 import org.example.Player;
 import org.example.RandomAIPlayer;
 import org.junit.jupiter.api.Test;
@@ -6,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EuchreTest {
 
@@ -22,6 +24,20 @@ class EuchreTest {
     void gameCompletesWithoutError() {
         Euchre euchre = new Euchre(createPlayers());
         assertDoesNotThrow(euchre::playGame);
+    }
+
+    @Test
+    void snapshotIncludesCurrentHandAndPlayers() {
+        Euchre euchre = new Euchre(createPlayers());
+        Hand hand = euchre.startNextHand();
+        hand.playNextTrick();
+
+        String snapshot = euchre.snapshot();
+
+        assertTrue(snapshot.contains("\"game\":\"Euchre\""));
+        assertTrue(snapshot.contains("\"currentHand\""));
+        assertTrue(snapshot.contains("\"players\""));
+        assertTrue(snapshot.contains("\"completedTricks\""));
     }
 
 }

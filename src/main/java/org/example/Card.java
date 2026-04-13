@@ -1,5 +1,7 @@
 package org.example;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class Card {
@@ -17,6 +19,10 @@ public class Card {
 
     public Rank getRank() {
         return rank;
+    }
+
+    public String getId() {
+        return rank.name() + "_" + suit.name();
     }
 
     /**
@@ -55,6 +61,16 @@ public class Card {
         return suit;
     }
 
+    public Map<String, Object> snapshot(Suit trump) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", getId());
+        snapshot.put("rank", rank.name());
+        snapshot.put("suit", suit.name());
+        snapshot.put("label", toString());
+        snapshot.put("effectiveSuit", getEffectiveSuit(trump).name());
+        return snapshot;
+    }
+
     private enum Priority {
         RIGHT_BOWER(100),
         LEFT_BOWER(99),
@@ -76,5 +92,3 @@ public class Card {
         return rank.toString() + suit.toString();
     }
 }
-
-

@@ -2,7 +2,9 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Deck {
     List<Card> cards;
@@ -39,5 +41,12 @@ public class Deck {
     public Card draw() {
         int SINGLE_CARD = 1;
         return draw(SINGLE_CARD).getFirst();
+    }
+
+    public Map<String, Object> snapshot(Suit trump) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("remaining", cards.size());
+        snapshot.put("cards", cards.stream().map(card -> card.snapshot(trump)).toList());
+        return snapshot;
     }
 }

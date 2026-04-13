@@ -2,7 +2,9 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public abstract class Player {
@@ -60,5 +62,14 @@ public abstract class Player {
 
     public String getName() {
         return name;
+    }
+
+    public Map<String, Object> snapshot(Suit trump) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("name", name);
+        snapshot.put("type", getClass().getSimpleName());
+        snapshot.put("handSize", hand.size());
+        snapshot.put("hand", hand.stream().map(card -> card.snapshot(trump)).toList());
+        return snapshot;
     }
 }
