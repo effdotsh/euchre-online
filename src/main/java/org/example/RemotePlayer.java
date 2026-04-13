@@ -87,6 +87,7 @@ public class RemotePlayer extends Player {
             String ledSuit
     ) {
         private static final String PASS = "PASS";
+        private static final String ORDER_UP = "ORDER_UP";
 
         private static PendingAction playCard(List<Card> legalCards, Optional<Suit> ledSuit) {
             return new PendingAction(
@@ -103,8 +104,8 @@ public class RemotePlayer extends Player {
         private static PendingAction orderUp(List<Card> hand, Card upCard) {
             return new PendingAction(
                     "order_up",
-                    buildAllowedValues(hand.stream().map(Card::getId).toList(), true),
-                    hand.stream().map(card -> card.snapshot(upCard.getSuit())).toList(),
+                    List.of(ORDER_UP, PASS),
+                    List.of(),
                     List.of(),
                     true,
                     upCard.snapshot(upCard.getSuit()),
@@ -150,6 +151,7 @@ public class RemotePlayer extends Player {
             snapshot.put("upCard", upCard);
             snapshot.put("ledSuit", ledSuit);
             snapshot.put("passValue", PASS);
+            snapshot.put("orderUpValue", ORDER_UP);
             return snapshot;
         }
     }

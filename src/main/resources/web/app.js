@@ -67,12 +67,15 @@ function buildStatus(snapshot) {
         return "Waiting for the next decision...";
     }
     if (pending.type === "play_card") {
+        if (!snapshot.currentHand?.started) {
+            return "Pick a card to discard for the dealer.";
+        }
         return pending.ledSuit
             ? `Your turn. Follow ${formatSuit(pending.ledSuit)} if you can.`
             : "Your turn. Lead a card.";
     }
     if (pending.type === "order_up") {
-        return `Order up ${pending.upCard.label} by clicking a discard, or pass.`;
+        return `Order up ${pending.upCard.label} or pass.`;
     }
     return "Choose trump or pass.";
 }
@@ -219,6 +222,7 @@ function drawGame(p, snapshot) {
     drawUpCard(p, hand.upCard, layout.upCardBox);
     drawTrick(p, hand.currentTrick, layout, hand.players);
     drawActionStrip(p, snapshot, remotePlayer, layout);
+    drawPendingPopup(p, pending, layout);
 }
 
 function getLayout(p) {
@@ -419,7 +423,7 @@ function drawSouthHand(p, player, pendingAction, box) {
     const y = box.y + box.h - Math.round(cardW * 1.45) - 14;
     const resolvedCardH = Math.round(cardW * 1.45);
     const legalIds = new Set(
-        pendingAction && (pendingAction.type === "play_card" || pendingAction.type === "order_up")
+        pendingAction && pendingAction.type === "play_card"
             ? pendingAction.cards.map(card => card.id)
             : []
     );
@@ -511,11 +515,6 @@ function drawActionStrip(p, snapshot, remotePlayer, layout) {
         return;
     }
 
-    if (pending.type === "order_up" && pending.canPass) {
-        drawButton(p, box.x + box.w - 110, box.y + box.h - 52, 92, 38, "Pass", pending.passValue);
-        return;
-    }
-
     if (pending.type === "call_trump") {
         let cursorX = box.x + 18;
         let buttonY = box.y + 68;
@@ -538,6 +537,42 @@ function drawActionStrip(p, snapshot, remotePlayer, layout) {
             drawButton(p, cursorX, buttonY, 88, 38, "Pass", pending.passValue);
         }
     }
+}
+
+function drawPendingPopup(p, pending, layout) {
+    if (!pending || pending.type !== "order_up") {
+        return;
+    }
+
+    p.fill(24, 19, 15, 92);
+    p.rect(layout.tableX, layout.tableY, layout.tableW, layout.tableH, 30);
+
+    const popupW = layout.mobile ? layout.tableW - 40 : 360;
+    const popupH = layout.mobile ? 180 : 170;
+    const x = layout.tableX + (layout.tableW - popupW) / 2;
+    const y = layout.tableY + (layout.tableH - popupH) / 2;
+
+    p.fill(255, 249, 242);
+    p.stroke(123, 101, 80, 42);
+    p.strokeWeight(1);
+    p.rect(x, y, popupW, popupH, 22);
+    p.noStroke();
+
+
+
+    p.fill(34, 29, 24);
+    p.textSize(24);
+    p.text("Order Up?", x + 20, y + 54);
+
+      const buttonY = y + popupH - 56;
+    const passW = 100;
+    const orderW = 128;
+    const gap = 12;
+    const totalW = passW + orderW + gap;
+    const startX = x + popupW - totalW - 20;
+
+    drawButton(p, startX, buttonY, passW, 38, "Pass", pending.passValue);
+    drawButton(p, startX + passW + gap, buttonY, orderW, 38, "Order up", pending.orderUpValue);
 }
 
 function drawButton(p, x, y, w, h, label, value) {
