@@ -514,33 +514,10 @@ function drawActionStrip(p, snapshot, remotePlayer, layout) {
     if (!pending) {
         return;
     }
-
-    if (pending.type === "call_trump") {
-        let cursorX = box.x + 18;
-        let buttonY = box.y + 68;
-        p.textSize(15);
-        pending.suits.forEach(suit => {
-            const label = formatSuit(suit);
-            const buttonW = Math.max(88, p.textWidth(label) + 36);
-            if (cursorX + buttonW > box.x + box.w - 18) {
-                cursorX = box.x + 18;
-                buttonY += 46;
-            }
-            drawButton(p, cursorX, buttonY, buttonW, 38, label, suit);
-            cursorX += buttonW + 10;
-        });
-        if (pending.canPass) {
-            if (cursorX + 88 > box.x + box.w - 18) {
-                cursorX = box.x + 18;
-                buttonY += 46;
-            }
-            drawButton(p, cursorX, buttonY, 88, 38, "Pass", pending.passValue);
-        }
-    }
 }
 
 function drawPendingPopup(p, pending, layout) {
-    if (!pending || pending.type !== "order_up") {
+    if (!pending || (pending.type !== "order_up" && pending.type !== "call_trump")) {
         return;
     }
 
@@ -548,7 +525,9 @@ function drawPendingPopup(p, pending, layout) {
     p.rect(layout.tableX, layout.tableY, layout.tableW, layout.tableH, 30);
 
     const popupW = layout.mobile ? layout.tableW - 40 : 360;
-    const popupH = layout.mobile ? 180 : 170;
+    const popupH = pending.type === "call_trump"
+        ? (layout.mobile ? 244 : 230)
+        : (layout.mobile ? 180 : 170);
     const x = layout.tableX + (layout.tableW - popupW) / 2;
     const y = layout.tableY + (layout.tableH - popupH) / 2;
 
@@ -560,19 +539,48 @@ function drawPendingPopup(p, pending, layout) {
 
 
 
+    if (pending.type === "order_up") {
+        p.fill(34, 29, 24);
+        p.textSize(24);
+        p.text("Order Up?", x + 20, y + 54);
+
+        const buttonY = y + popupH - 56;
+        const passW = 100;
+        const orderW = 128;
+        const gap = 12;
+        const totalW = passW + orderW + gap;
+        const startX = x + popupW - totalW - 20;
+
+        drawButton(p, startX, buttonY, passW, 38, "Pass", pending.passValue);
+        drawButton(p, startX + passW + gap, buttonY, orderW, 38, "Order up", pending.orderUpValue);
+        return;
+    }
+
     p.fill(34, 29, 24);
     p.textSize(24);
-    p.text("Order Up?", x + 20, y + 54);
+    p.text("Choose Trump", x + 20, y + 54);
 
-      const buttonY = y + popupH - 56;
-    const passW = 100;
-    const orderW = 128;
-    const gap = 12;
-    const totalW = passW + orderW + gap;
-    const startX = x + popupW - totalW - 20;
+    const passX = x + 20;
+    const passY = y + 72;
+    const passW = popupW - 40;
+    drawBarButton(p, passX, passY, passW, 44, "Pass", pending.passValue);
 
-    drawButton(p, startX, buttonY, passW, 38, "Pass", pending.passValue);
-    drawButton(p, startX + passW + gap, buttonY, orderW, 38, "Order up", pending.orderUpValue);
+    p.stroke(180, 170, 160, 90);
+    p.strokeWeight(1);
+    p.line(x + 20, y + 130, x + popupW - 20, y + 130);
+    p.noStroke();
+
+    const suitButtons = pending.suits;
+    const circleSize = 74;
+    const gap = 16;
+    const totalW = suitButtons.length * circleSize + (suitButtons.length - 1) * gap;
+    let cursorX = x + (popupW - totalW) / 2;
+    const buttonY = y + 142;
+
+    suitButtons.forEach(suit => {
+        drawSuitButton(p, cursorX, buttonY, circleSize, suit);
+        cursorX += circleSize + gap;
+    });
 }
 
 function drawButton(p, x, y, w, h, label, value) {
@@ -590,6 +598,56 @@ function drawButton(p, x, y, w, h, label, value) {
     if (!state.submitting) {
         addTarget({ x, y, w, h, value });
     }
+}
+
+function drawBarButton(p, x, y, w, h, label, value) {
+    const hovered = state.hoveredTarget?.value === value;
+    p.fill(hovered ? 241 : 248, hovered ? 235 : 242, hovered ? 226 : 234);
+    p.stroke(124, 104, 84, hovered ? 90 : 48);
+    p.strokeWeight(1.5);
+    p.rect(x, y, w, h, 22);
+    p.noStroke();
+    p.fill(33, 28, 24);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(20);
+    p.text(label, x + w / 2, y + h / 2 + 1);
+    p.textAlign(p.LEFT, p.BASELINE);
+    if (!state.submitting) {
+        addTarget({ x, y, w, h, value });
+    }
+}
+
+function drawSuitButton(p, x, y, size, suit) {
+    const hovered = state.hoveredTarget?.value === suit;
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+
+    p.fill(hovered ? 247 : 242, hovered ? 244 : 240, hovered ? 238 : 234);
+    p.stroke(124, 104, 84, hovered ? 90 : 48);
+    p.strokeWeight(1.5);
+    p.circle(centerX, centerY, size);
+    p.noStroke();
+
+    p.fill(suitGlyphColor(p, suit));
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(42);
+    p.text(suitGlyph(suit), centerX, centerY + 3);
+    p.textAlign(p.LEFT, p.BASELINE);
+
+    if (!state.submitting) {
+        addTarget({ x, y, w: size, h: size, value: suit });
+    }
+}
+
+function suitGlyph(suit) {
+    if (suit === "HEARTS") return "♥";
+    if (suit === "DIAMONDS") return "♦";
+    if (suit === "CLUBS") return "♣";
+    return "♠";
+}
+
+function suitGlyphColor(p, suit) {
+    return isRed(suit) ? p.color(200, 52, 46) : p.color(20, 22, 26);
 }
 
 function drawCardFace(p, x, y, w, h, card, clickable, hovered) {
