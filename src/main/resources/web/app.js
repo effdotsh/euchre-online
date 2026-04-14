@@ -67,12 +67,15 @@ function buildStatus(snapshot) {
         return "Waiting for the next decision...";
     }
     if (pending.type === "play_card") {
+        if (!snapshot.currentHand?.started) {
+            return "Pick a card to discard for the dealer.";
+        }
         return pending.ledSuit
             ? `Your turn. Follow ${formatSuit(pending.ledSuit)} if you can.`
             : "Your turn. Lead a card.";
     }
     if (pending.type === "order_up") {
-        return `Order up ${pending.upCard.label} by clicking a discard, or pass.`;
+        return `Order up ${pending.upCard.label} or pass.`;
     }
     return "Choose trump or pass.";
 }
@@ -219,6 +222,7 @@ function drawGame(p, snapshot) {
     drawUpCard(p, hand.upCard, layout.upCardBox);
     drawTrick(p, hand.currentTrick, layout, hand.players);
     drawActionStrip(p, snapshot, remotePlayer, layout);
+    drawPendingPopup(p, pending, layout);
 }
 
 function getLayout(p) {
@@ -345,8 +349,41 @@ function drawTable(p, layout) {
     p.ellipse(layout.trickCenterX, layout.trickCenterY, layout.tableW * (layout.mobile ? 0.58 : 0.38), layout.tableH * (layout.mobile ? 0.28 : 0.34));
 }
 
+function isSeatTurn(hand, pendingAction, seat) {
+    const seatIdxByName = {
+        north: 0,
+        east: 1,
+        south: 2,
+        west: 3
+    };
+    const seatIdx = seatIdxByName[seat];
+    if (seatIdx === undefined || !hand || hand.complete) {
+        return false;
+    }
+
+    if (pendingAction) {
+        return seat === "south";
+    }
+
+    if (!hand.started) {
+        return false;
+    }
+
+    const currentTrick = hand.currentTrick;
+    const plays = currentTrick?.plays ?? [];
+    if (currentTrick?.winnerIdx != null || plays.length >= 4) {
+        return false;
+    }
+
+    return ((hand.leaderIdx + plays.length) % 4) === seatIdx;
+}
+
 function drawSeat(p, player, hand, pendingAction, box, seat) {
-    p.fill(255, 251, 246, seat === "south" ? 242 : 214);
+    if (isSeatTurn(hand, pendingAction, seat)) {
+        p.fill(255, 226, 226, seat === "south" ? 246 : 222);
+    } else {
+        p.fill(255, 251, 246, seat === "south" ? 242 : 214);
+    }
     p.rect(box.x, box.y, box.w, box.h, 20);
 
     p.fill(112, 93, 75);
@@ -386,7 +423,7 @@ function drawSouthHand(p, player, pendingAction, box) {
     const y = box.y + box.h - Math.round(cardW * 1.45) - 14;
     const resolvedCardH = Math.round(cardW * 1.45);
     const legalIds = new Set(
-        pendingAction && (pendingAction.type === "play_card" || pendingAction.type === "order_up")
+        pendingAction && pendingAction.type === "play_card"
             ? pendingAction.cards.map(card => card.id)
             : []
     );
@@ -446,11 +483,6 @@ function drawTrick(p, currentTrick, layout, players) {
     };
 
     if (!currentTrick?.plays?.length) {
-        p.fill(248, 243, 237);
-        p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(16);
-        p.text("Waiting for the lead", layout.trickCenterX, layout.trickCenterY + 6);
-        p.textAlign(p.LEFT, p.BASELINE);
         return;
     }
 
@@ -482,34 +514,73 @@ function drawActionStrip(p, snapshot, remotePlayer, layout) {
     if (!pending) {
         return;
     }
+}
 
-    if (pending.type === "order_up" && pending.canPass) {
-        drawButton(p, box.x + box.w - 110, box.y + box.h - 52, 92, 38, "Pass", pending.passValue);
+function drawPendingPopup(p, pending, layout) {
+    if (!pending || (pending.type !== "order_up" && pending.type !== "call_trump")) {
         return;
     }
 
-    if (pending.type === "call_trump") {
-        let cursorX = box.x + 18;
-        let buttonY = box.y + 68;
-        p.textSize(15);
-        pending.suits.forEach(suit => {
-            const label = formatSuit(suit);
-            const buttonW = Math.max(88, p.textWidth(label) + 36);
-            if (cursorX + buttonW > box.x + box.w - 18) {
-                cursorX = box.x + 18;
-                buttonY += 46;
-            }
-            drawButton(p, cursorX, buttonY, buttonW, 38, label, suit);
-            cursorX += buttonW + 10;
-        });
-        if (pending.canPass) {
-            if (cursorX + 88 > box.x + box.w - 18) {
-                cursorX = box.x + 18;
-                buttonY += 46;
-            }
-            drawButton(p, cursorX, buttonY, 88, 38, "Pass", pending.passValue);
-        }
+    p.fill(24, 19, 15, 92);
+    p.rect(layout.tableX, layout.tableY, layout.tableW, layout.tableH, 30);
+
+    const popupW = layout.mobile ? layout.tableW - 40 : 360;
+    const popupH = pending.type === "call_trump"
+        ? (layout.mobile ? 244 : 230)
+        : (layout.mobile ? 180 : 170);
+    const x = layout.tableX + (layout.tableW - popupW) / 2;
+    const y = layout.tableY + (layout.tableH - popupH) / 2;
+
+    p.fill(255, 249, 242);
+    p.stroke(123, 101, 80, 42);
+    p.strokeWeight(1);
+    p.rect(x, y, popupW, popupH, 22);
+    p.noStroke();
+
+
+
+    if (pending.type === "order_up") {
+        p.fill(34, 29, 24);
+        p.textSize(24);
+        p.text("Order Up?", x + 20, y + 54);
+
+        const buttonY = y + popupH - 56;
+        const passW = 100;
+        const orderW = 128;
+        const gap = 12;
+        const totalW = passW + orderW + gap;
+        const startX = x + popupW - totalW - 20;
+
+        drawButton(p, startX, buttonY, passW, 38, "Pass", pending.passValue);
+        drawButton(p, startX + passW + gap, buttonY, orderW, 38, "Order up", pending.orderUpValue);
+        return;
     }
+
+    p.fill(34, 29, 24);
+    p.textSize(24);
+    p.text("Choose Trump", x + 20, y + 54);
+
+    const passX = x + 20;
+    const passY = y + 72;
+    const passW = popupW - 40;
+    drawBarButton(p, passX, passY, passW, 44, "Pass", pending.passValue);
+
+    p.stroke(180, 170, 160, 90);
+    p.strokeWeight(1);
+    p.line(x + 20, y + 130, x + popupW - 20, y + 130);
+    p.noStroke();
+
+    const suitButtons = pending.suits;
+    const circleSize = 74;
+    const gap = 16;
+    const totalW = suitButtons.length * circleSize + (suitButtons.length - 1) * gap;
+    let cursorX = x + (popupW - totalW) / 2;
+    const buttonY = y + 142;
+
+    suitButtons.forEach(suit => {
+        drawSuitButton(p, cursorX, buttonY, circleSize, suit);
+        cursorX += circleSize + gap;
+    });
 }
 
 function drawButton(p, x, y, w, h, label, value) {
@@ -527,6 +598,56 @@ function drawButton(p, x, y, w, h, label, value) {
     if (!state.submitting) {
         addTarget({ x, y, w, h, value });
     }
+}
+
+function drawBarButton(p, x, y, w, h, label, value) {
+    const hovered = state.hoveredTarget?.value === value;
+    p.fill(hovered ? 241 : 248, hovered ? 235 : 242, hovered ? 226 : 234);
+    p.stroke(124, 104, 84, hovered ? 90 : 48);
+    p.strokeWeight(1.5);
+    p.rect(x, y, w, h, 22);
+    p.noStroke();
+    p.fill(33, 28, 24);
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(20);
+    p.text(label, x + w / 2, y + h / 2 + 1);
+    p.textAlign(p.LEFT, p.BASELINE);
+    if (!state.submitting) {
+        addTarget({ x, y, w, h, value });
+    }
+}
+
+function drawSuitButton(p, x, y, size, suit) {
+    const hovered = state.hoveredTarget?.value === suit;
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+
+    p.fill(hovered ? 247 : 242, hovered ? 244 : 240, hovered ? 238 : 234);
+    p.stroke(124, 104, 84, hovered ? 90 : 48);
+    p.strokeWeight(1.5);
+    p.circle(centerX, centerY, size);
+    p.noStroke();
+
+    p.fill(suitGlyphColor(p, suit));
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(42);
+    p.text(suitGlyph(suit), centerX, centerY + 3);
+    p.textAlign(p.LEFT, p.BASELINE);
+
+    if (!state.submitting) {
+        addTarget({ x, y, w: size, h: size, value: suit });
+    }
+}
+
+function suitGlyph(suit) {
+    if (suit === "HEARTS") return "♥";
+    if (suit === "DIAMONDS") return "♦";
+    if (suit === "CLUBS") return "♣";
+    return "♠";
+}
+
+function suitGlyphColor(p, suit) {
+    return isRed(suit) ? p.color(200, 52, 46) : p.color(20, 22, 26);
 }
 
 function drawCardFace(p, x, y, w, h, card, clickable, hovered) {

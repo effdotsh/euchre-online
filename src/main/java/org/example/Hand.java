@@ -1,11 +1,7 @@
 package org.example;
 
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.example.Euchre.NUM_PLAYERS;
 
@@ -102,6 +98,7 @@ public class Hand {
     private void deal() {
         for (Player player : players) {
             player.setHand(deck.draw(NUM_CARDS_PER_HAND));
+            player.sortHand(Optional.empty());
         }
     }
 
@@ -173,7 +170,9 @@ public class Hand {
         Optional<Card> upCard = firstRoundSelectCallerAndTrump();
 
         upCard.ifPresent(this::secondRoundSelectCallerAndTrump);
-
+        for (Player player : players) {
+            player.sortHand(Optional.of(trump));
+        }
     }
 
     private void secondRoundSelectCallerAndTrump(Card upCard) {
@@ -211,13 +210,14 @@ public class Hand {
             Player player = players[playerIdx];
 
 
-            Optional<Card> discardedCardFromOrderingUp = player.chooseToOrderUp(upCard);
-            if (discardedCardFromOrderingUp.isPresent()) {
+            if (player.chooseToOrderUp(upCard)) {
+                Player dealer = players[dealerIdx];
+                dealer.addCard(upCard);
+                Card dealerDiscardedCard = dealer.chooseCard(upCard.getSuit(), Optional.empty());
                 trump = upCard.getSuit();
                 callerIdx = playerIdx;
                 System.out.println(player.getName() + " ordered up");
-                player.addCard(upCard);
-                player.removeCard(discardedCardFromOrderingUp.get());
+                dealer.removeCard(dealerDiscardedCard);
                 pause();
                 return Optional.empty();
             }

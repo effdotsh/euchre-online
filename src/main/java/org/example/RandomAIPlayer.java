@@ -15,7 +15,7 @@ public class RandomAIPlayer extends Player {
     }
 
     @Override
-    protected Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
+    protected Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         if (legalCards.isEmpty()) {
             throw new IllegalStateException("No legal cards available");
@@ -24,11 +24,8 @@ public class RandomAIPlayer extends Player {
     }
 
     @Override
-    public Optional<Card> chooseToOrderUp(Card upCard) {
-        if (random.nextBoolean()) {
-            return Optional.of(getHand().getFirst());
-        }
-        return Optional.empty();
+    public boolean chooseToOrderUp(Card upCard) {
+        return random.nextBoolean();
     }
 
     @Override

@@ -1,11 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class Player {
     private final String name;
@@ -48,15 +43,15 @@ public abstract class Player {
     }
 
     public final Card playCard(Suit trump, Optional<Suit> ledSuit) {
-        Card chosenCard = chooseCardToPlay(trump, ledSuit);
+        Card chosenCard = chooseCard(trump, ledSuit);
         removeCard(chosenCard);
         return chosenCard;
     }
 
 
-    protected abstract Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit);
+    protected abstract Card chooseCard(Suit trump, Optional<Suit> ledSuit);
 
-    public abstract Optional<Card> chooseToOrderUp(Card upCard);
+    public abstract boolean chooseToOrderUp(Card upCard);
 
     public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 
@@ -71,5 +66,25 @@ public abstract class Player {
         snapshot.put("handSize", hand.size());
         snapshot.put("hand", hand.stream().map(card -> card.snapshot(trump)).toList());
         return snapshot;
+    }
+
+    public void sortHand(Optional<Suit> trump) {
+        hand.sort((a, b) -> {
+            if (trump.isPresent()) {
+                Suit chosenTrump = trump.get();
+
+                int aPriority = a.getPriority(chosenTrump, Optional.of(chosenTrump));
+                int bPriority = b.getPriority(chosenTrump, Optional.of(chosenTrump));
+                int priorityDelta = bPriority - aPriority;
+
+                if (priorityDelta > 0) {
+                    return 1;
+                } else if (priorityDelta < 0) {
+                    return -1;
+                }
+            }
+
+            return b.getOrder() - a.getOrder();
+        });
     }
 }

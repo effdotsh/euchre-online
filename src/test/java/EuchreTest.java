@@ -1,21 +1,14 @@
-import org.example.Euchre;
-import org.example.Hand;
-import org.example.Card;
-import org.example.Player;
-import org.example.RandomAIPlayer;
-import org.example.Suit;
+import org.example.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EuchreTest {
 
@@ -86,13 +79,13 @@ class EuchreTest {
         }
 
         @Override
-        protected Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
+        protected Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
             List<Card> legalCards = getLegalCards(trump, ledSuit);
             return legalCards.getFirst();
         }
 
         @Override
-        public Optional<Card> chooseToOrderUp(Card upCard) {
+        public boolean chooseToOrderUp(Card upCard) {
             prompted.countDown();
             try {
                 if (!release.await(2, TimeUnit.SECONDS)) {
@@ -102,7 +95,7 @@ class EuchreTest {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Blocking player interrupted", e);
             }
-            return Optional.empty();
+            return false;
         }
 
         @Override

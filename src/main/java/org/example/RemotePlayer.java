@@ -14,7 +14,7 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    protected synchronized Card chooseCardToPlay(Suit trump, Optional<Suit> ledSuit) {
+    protected synchronized Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         pendingAction = PendingAction.playCard(legalCards, ledSuit);
         String cardId = awaitSubmission();
@@ -25,15 +25,10 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    public synchronized Optional<Card> chooseToOrderUp(Card upCard) {
+    public synchronized boolean chooseToOrderUp(Card upCard) {
         pendingAction = PendingAction.orderUp(getHand(), upCard);
         String submission = awaitSubmission();
-        if (PendingAction.PASS.equals(submission)) {
-            return Optional.empty();
-        }
-        return getHand().stream()
-                .filter(card -> card.getId().equals(submission))
-                .findFirst();
+        return !PendingAction.PASS.equals(submission);
     }
 
     @Override
@@ -92,6 +87,7 @@ public class RemotePlayer extends Player {
             String ledSuit
     ) {
         private static final String PASS = "PASS";
+        private static final String ORDER_UP = "ORDER_UP";
 
         private static PendingAction playCard(List<Card> legalCards, Optional<Suit> ledSuit) {
             return new PendingAction(
@@ -108,8 +104,8 @@ public class RemotePlayer extends Player {
         private static PendingAction orderUp(List<Card> hand, Card upCard) {
             return new PendingAction(
                     "order_up",
-                    buildAllowedValues(hand.stream().map(Card::getId).toList(), true),
-                    hand.stream().map(card -> card.snapshot(upCard.getSuit())).toList(),
+                    List.of(ORDER_UP, PASS),
+                    List.of(),
                     List.of(),
                     true,
                     upCard.snapshot(upCard.getSuit()),
@@ -155,6 +151,7 @@ public class RemotePlayer extends Player {
             snapshot.put("upCard", upCard);
             snapshot.put("ledSuit", ledSuit);
             snapshot.put("passValue", PASS);
+            snapshot.put("orderUpValue", ORDER_UP);
             return snapshot;
         }
     }
