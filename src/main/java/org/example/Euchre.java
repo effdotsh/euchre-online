@@ -47,6 +47,7 @@ public class Euchre {
         if (!hands.isEmpty() && !hands.getLast().isComplete()) {
             throw new IllegalStateException("Current hand must complete before starting the next hand");
         }
+        updatePlayersScoreContext();
         dealerIdx = (dealerIdx + 1) % NUM_PLAYERS;
         Hand hand = new Hand(players, dealerIdx, actionDelayMillis);
         hands.add(hand);
@@ -57,6 +58,15 @@ public class Euchre {
             throw e;
         }
         return hand;
+    }
+
+    private void updatePlayersScoreContext() {
+        for (int playerIdx = 0; playerIdx < players.length; playerIdx++) {
+            boolean onBlueTeam = (playerIdx % 2) == 0;
+            int ownTeamPoints = onBlueTeam ? bluePoints : redPoints;
+            int opposingTeamPoints = onBlueTeam ? redPoints : bluePoints;
+            players[playerIdx].updateScoreContext(ownTeamPoints, opposingTeamPoints);
+        }
     }
 
     public void advance() {

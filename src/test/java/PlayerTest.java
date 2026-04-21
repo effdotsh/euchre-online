@@ -4,6 +4,7 @@ import org.example.Players.RandomAIPlayer;
 import org.example.Players.StrategyAIPlayer;
 import org.example.Rank;
 import org.example.Suit;
+import org.example.UpcardRecipient;
 import org.example.strategies.StrategyFactory;
 import org.example.strategies.StrategyType;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,26 @@ class PlayerTest {
 
     private StrategyAIPlayer neutralStrategyPlayer() {
         return new StrategyAIPlayer("AI", StrategyFactory.create(StrategyType.NEUTRAL));
+    }
+
+    private void setAggressiveOnlyOrderUpHand(StrategyAIPlayer player) {
+        player.setHand(new ArrayList<>(List.of(
+                new Card(Suit.HEARTS, Rank.ACE),
+                new Card(Suit.HEARTS, Rank.KING),
+                new Card(Suit.CLUBS, Rank.QUEEN),
+                new Card(Suit.SPADES, Rank.JACK),
+                new Card(Suit.DIAMONDS, Rank.NINE)
+        )));
+    }
+
+    private void setNeutralNotConservativeOrderUpHand(StrategyAIPlayer player) {
+        player.setHand(new ArrayList<>(List.of(
+                new Card(Suit.DIAMONDS, Rank.JACK),
+                new Card(Suit.HEARTS, Rank.TEN),
+                new Card(Suit.CLUBS, Rank.QUEEN),
+                new Card(Suit.CLUBS, Rank.JACK),
+                new Card(Suit.SPADES, Rank.KING)
+        )));
     }
 
     @Test
@@ -373,6 +394,62 @@ class PlayerTest {
         Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
 
         assertEquals(lowTrump.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerBecomesAggressiveWhenTrailingByMoreThanThree() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        setAggressiveOnlyOrderUpHand(player);
+
+        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+
+        player.updateScoreContext(2, 6);
+
+        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+    }
+
+    @Test
+    void strategyPlayerBecomesConservativeWhenLeadingByMoreThanThree() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        setNeutralNotConservativeOrderUpHand(player);
+
+        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+
+        player.updateScoreContext(8, 4);
+
+        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+    }
+
+    @Test
+    void strategyPlayerReturnsToNeutralWhenScoreDiffMovesBackInsideThresholds() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        setAggressiveOnlyOrderUpHand(player);
+
+        player.updateScoreContext(1, 6);
+        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+
+        player.updateScoreContext(5, 5);
+        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+    }
+
+    @Test
+    void strategyPlayerDoesNotBecomeAggressiveAtNegativeThreeBoundary() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        setAggressiveOnlyOrderUpHand(player);
+
+        player.updateScoreContext(2, 5);
+
+        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+    }
+
+    @Test
+    void strategyPlayerDoesNotBecomeConservativeAtPositiveThreeBoundary() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        setNeutralNotConservativeOrderUpHand(player);
+
+        player.updateScoreContext(6, 3);
+
+        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
     }
 
     @Test

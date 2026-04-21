@@ -4,14 +4,16 @@ import org.example.Card;
 import org.example.Rank;
 import org.example.Suit;
 import org.example.UpcardRecipient;
-import org.example.strategies.EuchreAIStrategy;
+import org.example.strategies.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class StrategyAIPlayer extends Player {
     private final Random random;
-    private final EuchreAIStrategy strategy;
+    private EuchreAIStrategy strategy;
+    private final int thresholdForAgressive = -3;
+    private final int thresholdForConservative = 3;
 
     public StrategyAIPlayer(String name, EuchreAIStrategy strategy) {
         this(name, strategy, new Random());
@@ -40,6 +42,18 @@ public class StrategyAIPlayer extends Player {
         }
 
         return findLowestLossCard(trump, getHand());
+    }
+
+    @Override
+    public void updateScoreContext(int ownTeamPoints, int opposingTeamPoints) {
+        int scoreDiff = ownTeamPoints - opposingTeamPoints;
+        if (scoreDiff < thresholdForAgressive && !(strategy instanceof AggressiveStrategy)) {
+            strategy = StrategyFactory.create(StrategyType.AGGRESSIVE);
+        } else if (scoreDiff > thresholdForConservative && !(strategy instanceof ConservativeStrategy)) {
+            strategy = StrategyFactory.create(StrategyType.CONSERVATIVE);
+        } else if (!(strategy instanceof NeutralStrategy)) {
+            strategy = StrategyFactory.create(StrategyType.NEUTRAL);
+        }
     }
 
     private Card chooseCardToPlay(Suit trump,

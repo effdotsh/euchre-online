@@ -81,6 +81,10 @@ public abstract class Player {
 
     public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 
+    public void updateScoreContext(int ownTeamPoints, int opposingTeamPoints) {
+        // Default do nothing, only for Strategy AI players.
+    }
+
     public String getName() {
         return name;
     }
