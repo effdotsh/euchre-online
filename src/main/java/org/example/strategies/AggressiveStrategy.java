@@ -63,6 +63,15 @@ public class AggressiveStrategy implements EuchreAIStrategy {
                 .map(Map.Entry::getKey);
     }
 
+    @Override
+    public Optional<Suit> mustChooseCallTrump(Suit forbiddenSuit, List<Card> hand) {
+        return Arrays.stream(Suit.values())
+                .filter(suit -> suit != forbiddenSuit)
+                .map(suit -> Map.entry(suit, scoreCallTrump(hand, suit)))
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey);
+    }
+
     private double scoreCallTrump(List<Card> hand, Suit trump) {
         int trumpCount = (int) countTrumpCards(hand, trump);
         return scoreTrumpHolding(hand, trump)
@@ -157,4 +166,3 @@ public class AggressiveStrategy implements EuchreAIStrategy {
         };
     }
 }
-

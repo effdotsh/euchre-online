@@ -283,7 +283,7 @@ public class StrategyAIPlayer extends Player {
     @Override
     public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
         if (dealerIsStuck) {
-            return strategy.chooseCallTrump(forbiddenSuit, getHand());
+            return strategy.mustChooseCallTrump(forbiddenSuit, getHand());
         }
 
         return strategy.chooseCallTrump(forbiddenSuit, getHand());

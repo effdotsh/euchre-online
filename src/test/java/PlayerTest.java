@@ -464,4 +464,39 @@ class PlayerTest {
         )));
         assertEquals(2, player.getHand().size());
     }
+
+    @Test
+    void strategyPlayerCallsHighestSuitWhenForcedToCallTrumpWithPoorHand() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        player.setHand(new ArrayList<>(List.of(
+                new Card(Suit.HEARTS, Rank.NINE),
+                new Card(Suit.CLUBS, Rank.NINE),
+                new Card(Suit.SPADES, Rank.TEN),
+                new Card(Suit.DIAMONDS, Rank.TEN),
+                new Card(Suit.CLUBS, Rank.QUEEN)
+        )));
+
+
+        Optional<Suit> called = player.chooseToCallTrump(Suit.HEARTS, true);
+
+        assertTrue(called.isPresent(), "Player should be forced to call a suit");
+        assertNotEquals(Suit.HEARTS, called.get(), "Should not call the forbidden suit");
+    }
+
+    @Test
+    void strategyPlayerCallsBestNonForbiddenSuitWhenStuck() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        player.setHand(new ArrayList<>(List.of(
+                new Card(Suit.SPADES, Rank.JACK),
+                new Card(Suit.SPADES, Rank.ACE),
+                new Card(Suit.HEARTS, Rank.NINE),
+                new Card(Suit.CLUBS, Rank.NINE),
+                new Card(Suit.DIAMONDS, Rank.TEN)
+        )));
+
+        Optional<Suit> called = player.chooseToCallTrump(Suit.HEARTS, true);
+
+        assertTrue(called.isPresent(), "Player should be forced to call a suit");
+        assertEquals(Suit.SPADES, called.get(), "Should call the best suit (spades with jack and ace)");
+    }
 }

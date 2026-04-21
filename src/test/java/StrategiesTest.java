@@ -416,4 +416,23 @@ class StrategiesTest {
             );
         }
     }
+
+    @Test
+    void allStrategiesChooseHighestSuitWhenForcedToCallTrumpWithJackAndAce() {
+        AggressiveStrategy aggressive = new AggressiveStrategy();
+        NeutralStrategy neutral = new NeutralStrategy();
+        ConservativeStrategy conservative = new ConservativeStrategy();
+
+        List<Card> hand = cards(
+                new Card(Suit.SPADES, Rank.JACK),
+                new Card(Suit.SPADES, Rank.ACE),
+                new Card(Suit.HEARTS, Rank.NINE),
+                new Card(Suit.CLUBS, Rank.NINE),
+                new Card(Suit.DIAMONDS, Rank.TEN)
+        );
+
+        assertEquals(Optional.of(Suit.SPADES), aggressive.mustChooseCallTrump(Suit.HEARTS, hand));
+        assertEquals(Optional.of(Suit.SPADES), neutral.mustChooseCallTrump(Suit.HEARTS, hand));
+        assertEquals(Optional.of(Suit.SPADES), conservative.mustChooseCallTrump(Suit.HEARTS, hand));
+    }
 }

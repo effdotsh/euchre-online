@@ -13,5 +13,6 @@ public interface EuchreAIStrategy {
 
     Optional<Suit> chooseCallTrump(Suit forbiddenSuit, List<Card> hand);
 
+    Optional<Suit> mustChooseCallTrump(Suit forbiddenSuit, List<Card> hand);
 }
 

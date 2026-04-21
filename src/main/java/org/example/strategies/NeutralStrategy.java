@@ -14,26 +14,26 @@ public class NeutralStrategy implements EuchreAIStrategy {
 
     private static final double SELF_THRESHOLD = 34.5;
     private static final double PARTNER_THRESHOLD = 34.0;
-    private static final double OPPONENT_THRESHOLD = 31.0;
+    private static final double OPPONENT_THRESHOLD = 30.5;
 
     private static final double VOID_BONUS = 2.5;
-    private static final double OFFSUIT_ACE_POINTS = 7.5;
+    private static final double OFFSUIT_ACE_POINTS = 7.0;
 
     private static final double SELF_UPCARD_MULTIPLIER = 1.0;
     private static final double PARTNER_UPCARD_MULTIPLIER = 0.70;
-    private static final double OPPONENT_UPCARD_MULTIPLIER = 0.25;
+    private static final double OPPONENT_UPCARD_MULTIPLIER = 0.30;
 
     private static final int NO_TRUMP_CARDS = 0;
     private static final int NO_SUIT_CARDS = 0;
     private static final int SINGLETON_SUIT_SIZE = 1;
 
-    private static final double RIGHT_BOWER_POINTS = 20.0;
-    private static final double LEFT_BOWER_POINTS = 18.0;
+    private static final double RIGHT_BOWER_POINTS = 21.0;
+    private static final double LEFT_BOWER_POINTS = 17.0;
     private static final double TRUMP_ACE_POINTS = 13.0;
     private static final double TRUMP_KING_POINTS = 11.0;
-    private static final double TRUMP_QUEEN_POINTS = 10.0;
-    private static final double TRUMP_TEN_POINTS = 9.0;
-    private static final double TRUMP_NINE_POINTS = 8.0;
+    private static final double TRUMP_QUEEN_POINTS = 9.0;
+    private static final double TRUMP_TEN_POINTS = 8.0;
+    private static final double TRUMP_NINE_POINTS = 7.5;
     private static final double NO_POINTS = 0.0;
     private static final double ALL_SUITS_PENALTY = -5.0;
 
@@ -46,6 +46,7 @@ public class NeutralStrategy implements EuchreAIStrategy {
                 + scoreOffSuitAces(hand, trump)
                 + scoreShortSuits(hand, trump, trumpCount)
                 + scoreUpcardRecipientImpact(upCard, hand, trump, upcardRecipient);
+        System.out.println(score);
         return switch (upcardRecipient) {
             case SELF -> score >= SELF_THRESHOLD;
             case PARTNER -> score >= PARTNER_THRESHOLD;
@@ -63,8 +64,23 @@ public class NeutralStrategy implements EuchreAIStrategy {
                 .map(Map.Entry::getKey);
     }
 
+    @Override
+    public Optional<Suit> mustChooseCallTrump(Suit forbiddenSuit, List<Card> hand) {
+        return Arrays.stream(Suit.values())
+                .filter(suit -> suit != forbiddenSuit)
+                .map(suit -> Map.entry(suit, scoreCallTrump(hand, suit)))
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey);
+    }
+
     private double scoreCallTrump(List<Card> hand, Suit trump) {
         int trumpCount = (int) countTrumpCards(hand, trump);
+        double score = scoreTrumpHolding(hand, trump)
+                + scoreOffSuitAces(hand, trump)
+                + scoreShortSuits(hand, trump, trumpCount);
+
+        System.out.println(trump + " is trump, score:");
+        System.out.println(score);
         return scoreTrumpHolding(hand, trump)
                 + scoreOffSuitAces(hand, trump)
                 + scoreShortSuits(hand, trump, trumpCount);
@@ -163,4 +179,3 @@ public class NeutralStrategy implements EuchreAIStrategy {
         };
     }
 }
-
