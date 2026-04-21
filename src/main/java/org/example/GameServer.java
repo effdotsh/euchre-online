@@ -2,6 +2,10 @@ package org.example;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import org.example.Players.Player;
+import org.example.Players.RemotePlayer;
+import org.example.Players.StrategyAIPlayer;
+import org.example.strategies.NeutralStrategy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class GameServer {
     public static void main(String[] args) throws IOException {
@@ -37,10 +40,10 @@ public class GameServer {
     private static HostedGame createGame() {
         RemotePlayer remotePlayer = new RemotePlayer("Ephram");
         Player[] players = {
-                new RandomAIPlayer("Lance", new Random(1)),
-                new RandomAIPlayer("Laura", new Random(3)),
+                new StrategyAIPlayer("Lance Neutral", new NeutralStrategy()),
+                new StrategyAIPlayer("Laura Neutral", new NeutralStrategy()),
                 remotePlayer,
-                new RandomAIPlayer("Olivia", new Random(4))
+                new StrategyAIPlayer("Olivia Neutral", new NeutralStrategy())
         };
         return new HostedGame(new Euchre(players, 1200), remotePlayer);
     }

@@ -1,4 +1,7 @@
-package org.example;
+package org.example.Players;
+
+import org.example.Card;
+import org.example.Suit;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,7 +17,7 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    protected synchronized Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
+    protected synchronized Card chooseCard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCards) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         pendingAction = PendingAction.playCard(legalCards, ledSuit);
         String cardId = awaitSubmission();

@@ -1,6 +1,13 @@
-import org.example.*;
+import org.example.Card;
+import org.example.Players.Player;
+import org.example.Players.RandomAIPlayer;
+import org.example.Players.StrategyAIPlayer;
+import org.example.Rank;
+import org.example.Suit;
+import org.example.strategies.NeutralStrategy;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -16,7 +23,7 @@ class PlayerTest {
         randomAiPlayer.addCard(new Card(Suit.SPADES, Rank.ACE));
         randomAiPlayer.addCard(new Card(Suit.CLUBS, Rank.TEN));
 
-        Card selected = randomAiPlayer.playCard(null, Optional.of(Suit.HEARTS));
+        Card selected = randomAiPlayer.playCard(null, Optional.of(Suit.HEARTS), List.of());
 
         assertEquals(Suit.HEARTS, selected.getSuit());
         assertEquals(Rank.NINE, selected.getRank());
@@ -26,7 +33,7 @@ class PlayerTest {
     void aiThrowsWhenNoLegalCards() {
         RandomAIPlayer randomAiPlayer = new RandomAIPlayer("AI");
 
-        assertThrows(IllegalStateException.class, () -> randomAiPlayer.playCard(null, Optional.of(Suit.HEARTS)));
+        assertThrows(IllegalStateException.class, () -> randomAiPlayer.playCard(null, Optional.of(Suit.HEARTS), List.of()));
     }
 
     @Test
@@ -112,16 +119,255 @@ class PlayerTest {
     @Test
     void playCardRemovesCardFromHand() {
         Player player = new RandomAIPlayer("Test", new Random(42));
-        player.setHand(new java.util.ArrayList<>(List.of(
+        player.setHand(new ArrayList<>(List.of(
                 new Card(Suit.HEARTS, Rank.ACE),
                 new Card(Suit.SPADES, Rank.KING),
                 new Card(Suit.CLUBS, Rank.NINE)
         )));
 
-        Card played = player.playCard(Suit.HEARTS, Optional.empty());
+        Card played = player.playCard(Suit.HEARTS, Optional.empty(), List.of());
         assertNotNull(played);
         assertEquals(2, player.getHand().size());
         assertFalse(player.getHand().contains(played));
+    }
+
+    @Test
+    void strategyPlayerLeadsRightBowerWhenItHasTrumpAndNoLeadExists() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card rightBower = new Card(Suit.SPADES, Rank.JACK);
+        Card ace = new Card(Suit.HEARTS, Rank.ACE);
+        Card club = new Card(Suit.CLUBS, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(rightBower, ace, club)));
+
+        Card played = player.playCard(Suit.SPADES, Optional.empty(), List.of());
+
+        assertEquals(rightBower.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerFollowsNonTrumpSuitWithHighestCardUnlessPartnerPlayedAce() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card nine = new Card(Suit.HEARTS, Rank.NINE);
+        Card king = new Card(Suit.HEARTS, Rank.KING);
+        Card club = new Card(Suit.CLUBS, Rank.ACE);
+        player.setHand(new ArrayList<>(List.of(nine, king, club)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.HEARTS, Rank.TEN), Player.PlayedBy.OPPONENT, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
+
+        assertEquals(king.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerPlaysLowestWhenPartnerAlreadyPlayedAceInLedSuit() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card nine = new Card(Suit.HEARTS, Rank.NINE);
+        Card king = new Card(Suit.HEARTS, Rank.KING);
+        Card club = new Card(Suit.CLUBS, Rank.ACE);
+        player.setHand(new ArrayList<>(List.of(nine, king, club)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.HEARTS, Rank.ACE), Player.PlayedBy.PARTNER, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
+
+        assertEquals(nine.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerUsesLowestTrumpToBeatOpponentWhenItCanTakeTheTrick() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card lowTrump = new Card(Suit.SPADES, Rank.NINE);
+        Card highTrump = new Card(Suit.SPADES, Rank.KING);
+        Card offSuit = new Card(Suit.CLUBS, Rank.QUEEN);
+        player.setHand(new ArrayList<>(List.of(lowTrump, highTrump, offSuit)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.HEARTS, Rank.QUEEN), Player.PlayedBy.OPPONENT, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
+
+        assertEquals(lowTrump.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerShortSuitsWhenPartnerIsWinningOnTrump() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card safeDiscard = new Card(Suit.CLUBS, Rank.NINE);
+        Card otherDiscard = new Card(Suit.DIAMONDS, Rank.TEN);
+        Card trump = new Card(Suit.SPADES, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(safeDiscard, otherDiscard, trump)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.SPADES, Rank.KING), Player.PlayedBy.PARTNER, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
+
+        assertEquals(safeDiscard.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerLeadsShortSuitLowCardWhenBackedByTrump() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card highestNonTrump = new Card(Suit.HEARTS, Rank.KING);
+        Card lowerNonTrump = new Card(Suit.HEARTS, Rank.NINE);
+        Card trumpCard = new Card(Suit.SPADES, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(lowerNonTrump, trumpCard, highestNonTrump)));
+
+        Card played = player.playCard(Suit.SPADES, Optional.empty(), List.of());
+
+        assertEquals(lowerNonTrump.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerFallsBackToShortSuitSafeDiscardBeforeBurningAce() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card ace = new Card(Suit.HEARTS, Rank.ACE);
+        Card king = new Card(Suit.SPADES, Rank.KING);
+        Card trumpCard = new Card(Suit.DIAMONDS, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(king, trumpCard, ace)));
+
+        Card played = player.playCard(Suit.DIAMONDS, Optional.of(Suit.CLUBS), List.of());
+
+        assertEquals(king.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerFallsBackToLowestSafeShortSuitCardWhenNoAceExists() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card highestNonTrump = new Card(Suit.HEARTS, Rank.KING);
+        Card lowerNonTrump = new Card(Suit.CLUBS, Rank.QUEEN);
+        Card trumpCard = new Card(Suit.DIAMONDS, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(lowerNonTrump, trumpCard, highestNonTrump)));
+
+        Card played = player.playCard(Suit.DIAMONDS, Optional.of(Suit.SPADES), List.of());
+
+        assertEquals(lowerNonTrump.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerUsesLowestWinningTrumpAgainstOpponentTrumpLead() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card lowWinningTrump = new Card(Suit.SPADES, Rank.KING);
+        Card highWinningTrump = new Card(Suit.SPADES, Rank.JACK);
+        Card offSuit = new Card(Suit.CLUBS, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(offSuit, highWinningTrump, lowWinningTrump)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.SPADES, Rank.QUEEN), Player.PlayedBy.OPPONENT, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
+
+        assertEquals(lowWinningTrump.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerUsesFallbackWhenPartnerWinningButNoSafeDiscardExists() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card offSuitAce = new Card(Suit.HEARTS, Rank.ACE);
+        Card trumpCard = new Card(Suit.SPADES, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(trumpCard, offSuitAce)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.SPADES, Rank.KING), Player.PlayedBy.PARTNER, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.CLUBS), playedCards);
+
+        assertEquals(offSuitAce.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerChooseDiscardPrefersLowestSafeNonTrump() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card rightBower = new Card(Suit.SPADES, Rank.JACK);
+        Card offSuitAce = new Card(Suit.HEARTS, Rank.ACE);
+        Card lowestSafeDiscard = new Card(Suit.CLUBS, Rank.NINE);
+        Card otherSafeDiscard = new Card(Suit.DIAMONDS, Rank.TEN);
+        player.setHand(new ArrayList<>(List.of(rightBower, offSuitAce, otherSafeDiscard, lowestSafeDiscard)));
+
+        Card discarded = player.chooseDiscard(Suit.SPADES, Optional.empty(), List.of());
+
+        assertEquals(lowestSafeDiscard.getId(), discarded.getId());
+    }
+
+    @Test
+    void strategyPlayerChooseDiscardFallsBackToLowestCardWhenNoSafeDiscardExists() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card lowTrump = new Card(Suit.SPADES, Rank.NINE);
+        Card highTrump = new Card(Suit.SPADES, Rank.KING);
+        player.setHand(new ArrayList<>(List.of(highTrump, lowTrump)));
+
+        Card discarded = player.chooseDiscard(Suit.SPADES, Optional.empty(), List.of());
+
+        assertEquals(lowTrump.getId(), discarded.getId());
+    }
+
+    @Test
+    void strategyPlayerChooseDiscardPrefersShortSuitWhenBackedByTrump() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card trumpCard = new Card(Suit.SPADES, Rank.KING);
+        Card shortSuitCard = new Card(Suit.CLUBS, Rank.QUEEN);
+        Card longSuitLow = new Card(Suit.HEARTS, Rank.NINE);
+        Card longSuitHigh = new Card(Suit.HEARTS, Rank.KING);
+        player.setHand(new ArrayList<>(List.of(trumpCard, shortSuitCard, longSuitLow, longSuitHigh)));
+
+        Card discarded = player.chooseDiscard(Suit.SPADES, Optional.empty(), List.of());
+
+        assertEquals(shortSuitCard.getId(), discarded.getId());
+    }
+
+    @Test
+    void strategyPlayerChooseDiscardNeverBurnsAceWhenShortSuitOptionExists() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card trumpCard = new Card(Suit.SPADES, Rank.NINE);
+        Card shortSuitCard = new Card(Suit.CLUBS, Rank.TEN);
+        Card offSuitAce = new Card(Suit.DIAMONDS, Rank.ACE);
+        player.setHand(new ArrayList<>(List.of(trumpCard, offSuitAce, shortSuitCard)));
+
+        Card discarded = player.chooseDiscard(Suit.SPADES, Optional.empty(), List.of());
+
+        assertEquals(shortSuitCard.getId(), discarded.getId());
+    }
+
+    @Test
+    void strategyPlayerLosingTrickPlaysLowestNonTrumpFirst() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card lowNonTrump = new Card(Suit.CLUBS, Rank.NINE);
+        Card highNonTrump = new Card(Suit.HEARTS, Rank.KING);
+        Card trumpCard = new Card(Suit.SPADES, Rank.NINE);
+        player.setHand(new ArrayList<>(List.of(highNonTrump, trumpCard, lowNonTrump)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.SPADES, Rank.JACK), Player.PlayedBy.OPPONENT, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.DIAMONDS), playedCards);
+
+        assertEquals(lowNonTrump.getId(), played.getId());
+    }
+
+    @Test
+    void strategyPlayerLosingTrickWithOnlyTrumpPlaysLowestTrump() {
+        StrategyAIPlayer player = new StrategyAIPlayer("AI", new NeutralStrategy());
+        Card lowTrump = new Card(Suit.SPADES, Rank.NINE);
+        Card highTrump = new Card(Suit.SPADES, Rank.KING);
+        player.setHand(new ArrayList<>(List.of(highTrump, lowTrump)));
+
+        List<Player.PlayedCard> playedCards = List.of(
+                new Player.PlayedCard(new Card(Suit.SPADES, Rank.JACK), Player.PlayedBy.OPPONENT, 1)
+        );
+
+        Card played = player.playCard(Suit.SPADES, Optional.of(Suit.HEARTS), playedCards);
+
+        assertEquals(lowTrump.getId(), played.getId());
     }
 
     @Test
@@ -130,7 +376,7 @@ class PlayerTest {
         player.addCard(new Card(Suit.HEARTS, Rank.ACE));
         assertEquals(1, player.getHand().size());
 
-        player.setHand(new java.util.ArrayList<>(List.of(
+        player.setHand(new ArrayList<>(List.of(
                 new Card(Suit.CLUBS, Rank.NINE),
                 new Card(Suit.SPADES, Rank.KING)
         )));

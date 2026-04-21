@@ -1,10 +1,25 @@
-package org.example;
+package org.example.Players;
+
+import org.example.Card;
+import org.example.Suit;
+import org.example.UpcardRecipient;
 
 import java.util.*;
 
 public abstract class Player {
     private final String name;
     private List<Card> hand;
+
+
+    public Card chooseDiscard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCards) {
+        return chooseCard(trump, ledSuit, List.of());
+    }
+
+    public enum PlayedBy {
+        PARTNER,
+        OPPONENT,
+        SELF
+    }
 
     protected Player(String name) {
         this.name = name;
@@ -42,16 +57,27 @@ public abstract class Player {
         return followSuitCards.isEmpty() ? List.copyOf(hand) : followSuitCards;
     }
 
-    public final Card playCard(Suit trump, Optional<Suit> ledSuit) {
-        Card chosenCard = chooseCard(trump, ledSuit);
+    public final Card playCard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCardsView) {
+        Card chosenCard = chooseCard(trump, ledSuit, playedCardsView);
         removeCard(chosenCard);
         return chosenCard;
     }
 
+    protected abstract Card chooseCard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCards);
 
-    protected abstract Card chooseCard(Suit trump, Optional<Suit> ledSuit);
+
+    public record PlayedCard(Card card, PlayedBy playedBy, int playerIdx) {
+        public PlayedCard {
+            Objects.requireNonNull(card, "card cannot be null");
+            Objects.requireNonNull(playedBy, "playedBy cannot be null");
+        }
+    }
 
     public abstract boolean chooseToOrderUp(Card upCard);
+
+    public boolean chooseToOrderUp(Card upCard, UpcardRecipient upcardRecipient) {
+        return chooseToOrderUp(upCard);
+    }
 
     public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 

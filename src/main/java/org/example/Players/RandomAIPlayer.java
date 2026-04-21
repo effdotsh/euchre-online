@@ -1,4 +1,7 @@
-package org.example;
+package org.example.Players;
+
+import org.example.Card;
+import org.example.Suit;
 
 import java.util.*;
 
@@ -15,7 +18,7 @@ public class RandomAIPlayer extends Player {
     }
 
     @Override
-    protected Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
+    protected Card chooseCard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCards) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         if (legalCards.isEmpty()) {
             throw new IllegalStateException("No legal cards available");

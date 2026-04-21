@@ -1,4 +1,7 @@
-package org.example;
+package org.example.Players;
+
+import org.example.Card;
+import org.example.Suit;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -8,7 +11,8 @@ public class CLIPlayer extends Player {
         super(name);
     }
 
-    protected Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
+    @Override
+    protected Card chooseCard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCards) {
         List<Card> legalCards = getLegalCards(trump, ledSuit);
         System.out.println("Choose a card to play");
         return chooseCard(legalCards);

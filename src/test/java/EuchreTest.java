@@ -1,4 +1,9 @@
-import org.example.*;
+import org.example.Card;
+import org.example.Euchre;
+import org.example.Hand;
+import org.example.Players.Player;
+import org.example.Players.RandomAIPlayer;
+import org.example.Suit;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -79,7 +84,7 @@ class EuchreTest {
         }
 
         @Override
-        protected Card chooseCard(Suit trump, Optional<Suit> ledSuit) {
+        protected Card chooseCard(Suit trump, Optional<Suit> ledSuit, List<PlayedCard> playedCards) {
             List<Card> legalCards = getLegalCards(trump, ledSuit);
             return legalCards.getFirst();
         }
