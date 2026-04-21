@@ -5,7 +5,8 @@ import com.sun.net.httpserver.HttpServer;
 import org.example.Players.Player;
 import org.example.Players.RemotePlayer;
 import org.example.Players.StrategyAIPlayer;
-import org.example.strategies.NeutralStrategy;
+import org.example.strategies.StrategyFactory;
+import org.example.strategies.StrategyType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,10 +41,10 @@ public class GameServer {
     private static HostedGame createGame() {
         RemotePlayer remotePlayer = new RemotePlayer("Ephram");
         Player[] players = {
-                new StrategyAIPlayer("Lance Neutral", new NeutralStrategy()),
-                new StrategyAIPlayer("Laura Neutral", new NeutralStrategy()),
+                new StrategyAIPlayer("Lance Neutral", StrategyFactory.create(StrategyType.NEUTRAL)),
+                new StrategyAIPlayer("Laura Neutral", StrategyFactory.create(StrategyType.NEUTRAL)),
                 remotePlayer,
-                new StrategyAIPlayer("Olivia Neutral", new NeutralStrategy())
+                new StrategyAIPlayer("Olivia Neutral", StrategyFactory.create(StrategyType.NEUTRAL))
         };
         return new HostedGame(new Euchre(players, 1200), remotePlayer);
     }
