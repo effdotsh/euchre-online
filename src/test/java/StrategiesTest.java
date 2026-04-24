@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -68,9 +69,9 @@ class StrategiesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("orderUpScenarios")
     void shouldOrderUpMatchTheExpectedStrategyCalls(OrderUpScenario scenario) {
-        assertStrategyDecision("aggressive", new AggressiveStrategy(), scenario, scenario.aggressiveExpected());
-        assertStrategyDecision("neutral", new NeutralStrategy(), scenario, scenario.neutralExpected());
-        assertStrategyDecision("conservative", new ConservativeStrategy(), scenario, scenario.conservativeExpected());
+        assertStrategyDecision("aggressive", new AggressiveStrategy(), scenario, StrategyExpectation.AGGRESSIVE);
+        assertStrategyDecision("neutral", new NeutralStrategy(), scenario, StrategyExpectation.NEUTRAL);
+        assertStrategyDecision("conservative", new ConservativeStrategy(), scenario, StrategyExpectation.CONSERVATIVE);
     }
 
     private static Stream<OrderUpScenario> orderUpScenarios() {
@@ -84,9 +85,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.NINE),
                                 new Card(Suit.SPADES, Rank.TEN)
                         ),
-                        false,
-                        false,
-                        false
+                        EnumSet.noneOf(StrategyExpectation.class)
                 ),
                 OrderUpScenario.of(
                         "2. J♥ to partner; A♥, K♥, Q♣, J♠, 9♦ — aggressive calls",
@@ -97,9 +96,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.JACK),
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
-                        true,
-                        false,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE)
                 ),
                 OrderUpScenario.of(
                         "3. J♥ to partner; 10♥, 9♥, K♣, Q♠, Q♦ — nobody calls",
@@ -110,9 +107,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.QUEEN),
                                 new Card(Suit.DIAMONDS, Rank.QUEEN)
                         ),
-                        false,
-                        false,
-                        false
+                        EnumSet.noneOf(StrategyExpectation.class)
                 ),
                 OrderUpScenario.of(
                         "4. J♥ to partner; A♥, 10♥, K♣, Q♠, Q♦ — aggressive only",
@@ -123,9 +118,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.QUEEN),
                                 new Card(Suit.DIAMONDS, Rank.QUEEN)
                         ),
-                        true,
-                        false,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE)
                 ),
                 OrderUpScenario.of(
                         "5. J♥ to partner; J♦, 10♥, Q♣, J♣, K♠ — aggressive and neutral",
@@ -136,9 +129,7 @@ class StrategiesTest {
                                 new Card(Suit.CLUBS, Rank.JACK),
                                 new Card(Suit.SPADES, Rank.KING)
                         ),
-                        true,
-                        true,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL)
                 ),
                 OrderUpScenario.of(
                         "6. J♥ to partner; J♦, 10♥, A♠, K♠, Q♦ — all three call",
@@ -149,9 +140,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.KING),
                                 new Card(Suit.DIAMONDS, Rank.QUEEN)
                         ),
-                        true,
-                        true,
-                        true
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL, StrategyExpectation.CONSERVATIVE)
                 ),
                 OrderUpScenario.of(
                         "7. J♥ to partner; Q♥, A♠, 10♠, A♦, Q♦ — aggressive and neutral",
@@ -162,9 +151,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.ACE),
                                 new Card(Suit.DIAMONDS, Rank.QUEEN)
                         ),
-                        true,
-                        true,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL)
                 ),
                 OrderUpScenario.of(
                         "8. J♥ to partner; Q♥, 10♥, 9♥, K♣, Q♣ — all three call",
@@ -175,9 +162,7 @@ class StrategiesTest {
                                 new Card(Suit.CLUBS, Rank.KING),
                                 new Card(Suit.CLUBS, Rank.QUEEN)
                         ),
-                        true,
-                        true,
-                        true
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL, StrategyExpectation.CONSERVATIVE)
                 ),
                 OrderUpScenario.of(
                         "9. J♥ to partner; A♣, A♠, A♦, 10♦, 9♦ — aggressive and neutral",
@@ -188,9 +173,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.TEN),
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
-                        true,
-                        true,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL)
                 ),
                 OrderUpScenario.of(
                         "10. J♥ to partner; 10♥, 9♥, K♠, Q♠, Q♣ — aggressive only",
@@ -201,9 +184,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.QUEEN),
                                 new Card(Suit.CLUBS, Rank.QUEEN)
                         ),
-                        true,
-                        false,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE)
                 ),
                 OrderUpScenario.of(
                         "11. K♠ to opponents; J♣, J♠, A♠, 9♣, 9♦ — all three call",
@@ -216,9 +197,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
                         UpcardRecipient.OPPONENT,
-                        true,
-                        true,
-                        true
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL, StrategyExpectation.CONSERVATIVE)
                 ),
                 OrderUpScenario.of(
                         "12. 9♠ to partner; J♣, J♠, A♠, 9♣, 9♦ — all three call",
@@ -231,9 +210,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
                         UpcardRecipient.PARTNER,
-                        true,
-                        true,
-                        true
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL, StrategyExpectation.CONSERVATIVE)
                 ),
                 OrderUpScenario.of(
                         "13. 9♠ to you; J♣, J♠, A♠, 9♣, 9♦ — all three call",
@@ -246,9 +223,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
                         UpcardRecipient.SELF,
-                        true,
-                        true,
-                        true
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL, StrategyExpectation.CONSERVATIVE)
                 ), OrderUpScenario.of(
                         "13. 9♥ to you; J♣, J♠, A♠, 9♣, 9♦ — none call",
                         new Card(Suit.HEARTS, Rank.NINE),
@@ -260,9 +235,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
                         UpcardRecipient.SELF,
-                        false,
-                        false,
-                        false
+                        EnumSet.noneOf(StrategyExpectation.class)
                 ),
                 OrderUpScenario.of(
                         "14. 9♠ to opponents; J♠, J♣, K♥, Q♣, 9♦ — aggressive and neutral",
@@ -275,9 +248,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.NINE)
                         ),
                         UpcardRecipient.OPPONENT,
-                        true,
-                        true,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL)
                 ),
                 OrderUpScenario.of(
                         "15. 10♠ to opponents; J♥, Q♥, J♠, Q♠, Q♦ — none",
@@ -290,9 +261,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.QUEEN)
                         ),
                         UpcardRecipient.OPPONENT,
-                        false,
-                        false,
-                        false
+                        EnumSet.noneOf(StrategyExpectation.class)
                 ),
                 OrderUpScenario.of(
                         "16. Q♣ to opponents; 10♣, A♣, 10♠, K♣, K♠ — aggressive and neutral",
@@ -305,9 +274,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.KING)
                         ),
                         UpcardRecipient.OPPONENT,
-                        true,
-                        true,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL)
                 ),
                 OrderUpScenario.of(
                         "17. A♦ to you; A♠, 10♥, 9♥, Q♠, K♦ — none",
@@ -320,9 +287,7 @@ class StrategiesTest {
                                 new Card(Suit.DIAMONDS, Rank.KING)
                         ),
                         UpcardRecipient.SELF,
-                        false,
-                        false,
-                        false
+                        EnumSet.noneOf(StrategyExpectation.class)
                 ),
                 OrderUpScenario.of(
                         "18. Q♠ to opponents; Q♦, A♣, J♦, J♣, A♠ — aggressive and neutral",
@@ -335,9 +300,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.ACE)
                         ),
                         UpcardRecipient.OPPONENT,
-                        true,
-                        true,
-                        false
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL)
                 ),
                 OrderUpScenario.of(
                         "19. 9♠ to opponents; A♦, J♣, A♠, J♦, Q♠ — all three call",
@@ -350,9 +313,7 @@ class StrategiesTest {
                                 new Card(Suit.SPADES, Rank.QUEEN)
                         ),
                         UpcardRecipient.OPPONENT,
-                        true,
-                        true,
-                        true
+                        EnumSet.of(StrategyExpectation.AGGRESSIVE, StrategyExpectation.NEUTRAL, StrategyExpectation.CONSERVATIVE)
                 )
 
         );
@@ -361,12 +322,18 @@ class StrategiesTest {
     private static void assertStrategyDecision(String strategyName,
                                                EuchreAIStrategy strategy,
                                                OrderUpScenario scenario,
-                                               boolean expected) {
+                                               StrategyExpectation expectation) {
         assertEquals(
-                expected,
+                scenario.expectedStrategies().contains(expectation),
                 strategy.shouldOrderUp(scenario.upCard(), scenario.hand(), scenario.recipient()),
                 () -> scenario.name() + " -> " + strategyName
         );
+    }
+
+    private enum StrategyExpectation {
+        AGGRESSIVE,
+        NEUTRAL,
+        CONSERVATIVE
     }
 
     private static List<Card> cards(Card... cards) {
@@ -378,41 +345,35 @@ class StrategiesTest {
             Card upCard,
             List<Card> hand,
             UpcardRecipient recipient,
-            boolean aggressiveExpected,
-            boolean neutralExpected,
-            boolean conservativeExpected
+            EnumSet<StrategyExpectation> expectedStrategies
     ) {
+        private OrderUpScenario {
+            expectedStrategies = EnumSet.copyOf(expectedStrategies);
+        }
+
         private static OrderUpScenario of(String name,
                                           Card upCard,
                                           List<Card> hand,
                                           UpcardRecipient recipient,
-                                          boolean aggressiveExpected,
-                                          boolean neutralExpected,
-                                          boolean conservativeExpected) {
+                                          EnumSet<StrategyExpectation> expectedStrategies) {
             return new OrderUpScenario(
                     name,
                     upCard,
                     hand,
                     recipient,
-                    aggressiveExpected,
-                    neutralExpected,
-                    conservativeExpected
+                    expectedStrategies
             );
         }
 
         private static OrderUpScenario of(String name,
                                           List<Card> hand,
-                                          boolean aggressiveExpected,
-                                          boolean neutralExpected,
-                                          boolean conservativeExpected) {
+                                          EnumSet<StrategyExpectation> expectedStrategies) {
             return of(
                     name,
                     new Card(Suit.HEARTS, Rank.JACK),
                     hand,
                     UpcardRecipient.PARTNER,
-                    aggressiveExpected,
-                    neutralExpected,
-                    conservativeExpected
+                    expectedStrategies
             );
         }
     }
