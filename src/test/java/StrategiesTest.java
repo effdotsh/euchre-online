@@ -66,6 +66,34 @@ class StrategiesTest {
         assertTrue(aggressive.chooseCallTrump(Suit.HEARTS, hand).isEmpty());
     }
 
+    @Test
+    void aggressiveChooseCallTrumpPicksBestSuitAmongTwoJackOptions() {
+        AggressiveStrategy aggressive = new AggressiveStrategy();
+        List<Card> hand = cards(
+                new Card(Suit.SPADES, Rank.JACK),
+                new Card(Suit.CLUBS, Rank.JACK),
+                new Card(Suit.HEARTS, Rank.JACK),
+                new Card(Suit.DIAMONDS, Rank.JACK),
+                new Card(Suit.CLUBS, Rank.ACE)
+        );
+
+        assertEquals(Optional.of(Suit.CLUBS), aggressive.chooseCallTrump(Suit.HEARTS, hand));
+    }
+
+    @Test
+    void aggressiveMustChooseCallTrumpPicksBestSuitAmongTwoJackOptions() {
+        AggressiveStrategy aggressive = new AggressiveStrategy();
+        List<Card> hand = cards(
+                new Card(Suit.SPADES, Rank.JACK),
+                new Card(Suit.CLUBS, Rank.JACK),
+                new Card(Suit.HEARTS, Rank.JACK),
+                new Card(Suit.DIAMONDS, Rank.JACK),
+                new Card(Suit.CLUBS, Rank.ACE)
+        );
+
+        assertEquals(Optional.of(Suit.CLUBS), aggressive.mustChooseCallTrump(Suit.HEARTS, hand));
+    }
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("orderUpScenarios")
     void shouldOrderUpMatchTheExpectedStrategyCalls(OrderUpScenario scenario) {
