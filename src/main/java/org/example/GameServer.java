@@ -2,11 +2,7 @@ package org.example;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import org.example.Players.Player;
 import org.example.Players.RemotePlayer;
-import org.example.Players.StrategyAIPlayer;
-import org.example.Strategies.StrategyFactory;
-import org.example.Strategies.StrategyType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,14 +35,15 @@ public class GameServer {
     }
 
     private static HostedGame createGame() {
-        RemotePlayer remotePlayer = new RemotePlayer("Ephram");
-        Player[] players = {
-                new StrategyAIPlayer("Lance", StrategyFactory.create(StrategyType.NEUTRAL)),
-                new StrategyAIPlayer("Laura", StrategyFactory.create(StrategyType.NEUTRAL)),
-                remotePlayer,
-                new StrategyAIPlayer("Olivia", StrategyFactory.create(StrategyType.NEUTRAL))
-        };
-        return new HostedGame(new Euchre(players, 1200), remotePlayer);
+        GameBuilder.BuildResult builtGame = GameBuilder.builder()
+                .withActionDelayMillis(1200)
+                .withSeat(GameBuilder.Seat.NORTH, GameBuilder.PlayerKind.STRATEGY_AI, "Lance")
+                .withSeat(GameBuilder.Seat.EAST, GameBuilder.PlayerKind.STRATEGY_AI, "Laura")
+                .withSeat(GameBuilder.Seat.SOUTH, GameBuilder.PlayerKind.REMOTE, "Ephram")
+                .withSeat(GameBuilder.Seat.WEST, GameBuilder.PlayerKind.STRATEGY_AI, "Olivia")
+                .build();
+
+        return new HostedGame(builtGame.game(), builtGame.remoteAt(GameBuilder.Seat.SOUTH));
     }
 
     private static void handleAction(HttpExchange exchange, RemotePlayer remotePlayer) throws IOException {

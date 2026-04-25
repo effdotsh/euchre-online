@@ -1,18 +1,15 @@
 package org.example;
 
-import org.example.Players.CLIPlayer;
-import org.example.Players.Player;
-import org.example.Players.RandomAIPlayer;
-
 public class Main {
     public static void main(String[] args) {
-        Player[] players = {
-                new RandomAIPlayer("Lance"),
-                new CLIPlayer("Ephram"),
-                new RandomAIPlayer("Laura"),
-                new RandomAIPlayer("Olivia")
-        };
-        Euchre euchre = new Euchre(players);
-        euchre.playGame();
+        GameBuilder.BuildResult builtGame = GameBuilder.builder()
+                .withSeat(GameBuilder.Seat.NORTH, GameBuilder.PlayerKind.RANDOM_AI, "Lance")
+                .withSeat(GameBuilder.Seat.EAST, GameBuilder.PlayerKind.CLI, "Ephram")
+                .withSeat(GameBuilder.Seat.SOUTH, GameBuilder.PlayerKind.RANDOM_AI, "Laura")
+                .withSeat(GameBuilder.Seat.WEST, GameBuilder.PlayerKind.RANDOM_AI, "Olivia")
+                .withStickDealer(true)
+                .build();
+
+        builtGame.game().playGame();
     }
 }
