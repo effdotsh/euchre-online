@@ -1,11 +1,11 @@
 import org.example.Card;
 import org.example.Rank;
+import org.example.Strategies.AggressiveStrategy;
+import org.example.Strategies.ConservativeStrategy;
+import org.example.Strategies.EuchreAIStrategy;
+import org.example.Strategies.NeutralStrategy;
 import org.example.Suit;
 import org.example.UpcardRecipient;
-import org.example.strategies.AggressiveStrategy;
-import org.example.strategies.ConservativeStrategy;
-import org.example.strategies.EuchreAIStrategy;
-import org.example.strategies.NeutralStrategy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;

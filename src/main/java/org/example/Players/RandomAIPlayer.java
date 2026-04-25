@@ -1,5 +1,6 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Suit;
 
@@ -27,19 +28,19 @@ public class RandomAIPlayer extends Player {
     }
 
     @Override
-    public boolean chooseToOrderUp(Card upCard) {
-        return random.nextBoolean();
+    public Bid chooseToOrderUp(Card upCard) {
+        return random.nextBoolean() ? Bid.orderUp(false) : Bid.pass();
     }
 
     @Override
-    public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+    public Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
         if (!dealerIsStuck && random.nextBoolean()) {
-            return Optional.empty();
+            return Bid.pass();
         }
 
         List<Suit> suitOptions = Arrays.stream(Suit.values()).filter(s -> s != forbiddenSuit).toList();
         int suitIdx = random.nextInt(suitOptions.size());
-        return Optional.of(suitOptions.get(suitIdx));
+        return Bid.callTrump(suitOptions.get(suitIdx), false);
     }
 
 }

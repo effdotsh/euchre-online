@@ -1,5 +1,6 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Suit;
 import org.example.UpcardRecipient;
@@ -75,13 +76,13 @@ public abstract class Player {
         }
     }
 
-    public abstract boolean chooseToOrderUp(Card upCard);
+    public abstract Bid chooseToOrderUp(Card upCard);
 
-    public boolean chooseToOrderUp(Card upCard, UpcardRecipient upcardRecipient) {
+    public Bid chooseToOrderUp(Card upCard, UpcardRecipient upcardRecipient) {
         return chooseToOrderUp(upCard);
     }
 
-    public abstract Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
+    public abstract Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck);
 
     public void updateScoreContext(int ownTeamPoints, int opposingTeamPoints) {
         // Default do nothing, only for Strategy AI players.

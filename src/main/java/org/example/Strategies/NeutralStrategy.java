@@ -1,4 +1,4 @@
-package org.example.strategies;
+package org.example.Strategies;
 
 import org.example.Card;
 import org.example.Rank;
@@ -10,31 +10,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class ConservativeStrategy extends EuchreAIStrategy {
+public class NeutralStrategy extends EuchreAIStrategy {
 
-    private static final double SELF_THRESHOLD = 40.0;
-    private static final double PARTNER_THRESHOLD = 42.0;
-    private static final double OPPONENT_THRESHOLD = 43.0;
+    private static final double SELF_THRESHOLD = 34.5;
+    private static final double PARTNER_THRESHOLD = 34.0;
+    private static final double OPPONENT_THRESHOLD = 30.5;
 
-    private static final double VOID_BONUS = 3.0;
-    private static final double OFFSUIT_ACE_POINTS = 6.0;
+    private static final double VOID_BONUS = 2.5;
+    private static final double OFFSUIT_ACE_POINTS = 7.0;
     private static final double SELF_UPCARD_MULTIPLIER = 1.0;
     private static final double PARTNER_UPCARD_MULTIPLIER = 0.70;
-    private static final double OPPONENT_UPCARD_MULTIPLIER = 0.35;
-    private static final double ALL_SUITS_PENALTY = -3.0;
+    private static final double OPPONENT_UPCARD_MULTIPLIER = 0.30;
+    private static final double ALL_SUITS_PENALTY = -5.0;
 
-    private static final double RIGHT_BOWER_POINTS = 22.0;
-    private static final double LEFT_BOWER_POINTS = 15.0;
-    private static final double TRUMP_ACE_POINTS = 12.0;
-    private static final double TRUMP_KING_POINTS = 10.0;
+    private static final double RIGHT_BOWER_POINTS = 21.0;
+    private static final double LEFT_BOWER_POINTS = 17.0;
+    private static final double TRUMP_ACE_POINTS = 13.0;
+    private static final double TRUMP_KING_POINTS = 11.0;
     private static final double TRUMP_QUEEN_POINTS = 9.0;
     private static final double TRUMP_TEN_POINTS = 8.0;
-    private static final double TRUMP_NINE_POINTS = 7.0;
+    private static final double TRUMP_NINE_POINTS = 7.5;
 
     @Override
     public boolean shouldOrderUp(Card upCard, List<Card> hand, UpcardRecipient upcardRecipient) {
         Suit trump = upCard.getSuit();
         int trumpCount = (int) countTrumpCards(hand, trump);
+
+        if (hasTwoJacks(hand, trump)) {
+            return true;
+        }
+
+        if (trumpCount >= 4) {
+            return true;
+        }
 
         double score = scoreTrumpHolding(hand, trump)
                 + scoreOffSuitAces(hand, trump, OFFSUIT_ACE_POINTS)
@@ -95,4 +103,3 @@ public class ConservativeStrategy extends EuchreAIStrategy {
         };
     }
 }
-

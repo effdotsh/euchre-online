@@ -1,3 +1,4 @@
+import org.example.Bid;
 import org.example.Card;
 import org.example.Euchre;
 import org.example.Hand;
@@ -90,7 +91,7 @@ class EuchreTest {
         }
 
         @Override
-        public boolean chooseToOrderUp(Card upCard) {
+        public Bid chooseToOrderUp(Card upCard) {
             prompted.countDown();
             try {
                 if (!release.await(2, TimeUnit.SECONDS)) {
@@ -100,12 +101,16 @@ class EuchreTest {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Blocking player interrupted", e);
             }
-            return false;
+            return Bid.pass();
         }
 
         @Override
-        public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
-            return Arrays.stream(Suit.values()).filter(suit -> suit != forbiddenSuit).findFirst();
+        public Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+            return Arrays.stream(Suit.values())
+                    .filter(suit -> suit != forbiddenSuit)
+                    .findFirst()
+                    .map(suit -> Bid.callTrump(suit, false))
+                    .orElseGet(Bid::pass);
         }
 
         private boolean awaitPrompt() throws InterruptedException {
