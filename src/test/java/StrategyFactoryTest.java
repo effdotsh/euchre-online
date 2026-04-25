@@ -1,8 +1,4 @@
-import org.example.strategies.AggressiveStrategy;
-import org.example.strategies.ConservativeStrategy;
-import org.example.strategies.NeutralStrategy;
-import org.example.strategies.StrategyFactory;
-import org.example.strategies.StrategyType;
+import org.example.Strategies.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;

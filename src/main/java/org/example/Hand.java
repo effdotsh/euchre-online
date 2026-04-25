@@ -23,6 +23,8 @@ public class Hand {
     private final int dealerIdx;
     private int leaderIdx;
     private int callerIdx = -1;
+    private Bid finalBid;
+
     private boolean started = false;
     private boolean complete = false;
     private int[] scoredPoints = new int[]{0, 0};
@@ -105,25 +107,30 @@ public class Hand {
     }
 
     private int[] scoreHand() {
-        //todo: add way to go alone
         boolean blueCalled = (callerIdx % 2) == 0;
         int callingTeamTricks = blueCalled ? blueTricks : redTricks;
 
-        int bluePoints = 0;
-        int redPoints = 0;
+        int callerPoints = 0;
+        int defenderPoints = 0;
+
 
         if (callingTeamTricks == 5) {
-            if (blueCalled) bluePoints = 2;
-            else redPoints = 2;
+            if (finalBid.isAlone()) {
+                callerPoints = 4;
+            } else {
+                callerPoints = 2;
+            }
         } else if (callingTeamTricks >= 3) {
-            if (blueCalled) bluePoints = 1;
-            else redPoints = 1;
+            callerPoints = 1;
         } else {
-            if (blueCalled) redPoints = 2;
-            else bluePoints = 2;
+            defenderPoints = 2;
         }
 
-        return new int[]{bluePoints, redPoints};
+        if (blueCalled) {
+            return new int[]{callerPoints, defenderPoints};
+        } else {
+            return new int[]{defenderPoints, callerPoints};
+        }
     }
 
     private int playTrick() {
@@ -138,11 +145,15 @@ public class Hand {
         for (int offset = 0; offset < NUM_PLAYERS; offset++) {
             int playerIdx = (leaderIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
+            if (finalBid.isAlone() && playerIdx == (callerIdx + NUM_PLAYERS / 2) % NUM_PLAYERS) {
+                System.out.println(player.getName() + " is skipped");
+                continue;
+            }
             List<Player.PlayedCard> alreadyPlayedCards = buildPlayedCardsView(trickCards, playerIdx);
             Card chosenCard = player.playCard(trump, suitLead, alreadyPlayedCards);
             trickCards[playerIdx] = chosenCard;
 
-            if (playerIdx == leaderIdx) {
+            if (suitLead.isEmpty()) {
                 suitLead = Optional.of(chosenCard.getEffectiveSuit(trump));
                 currentTrick.put("ledSuit", suitLead.get().name());
             }
@@ -157,9 +168,12 @@ public class Hand {
             pause();
         }
 
-        int trickWinnerIdx = 0;
+        int trickWinnerIdx = -1;
         int maxPriority = -1;
         for (int i = 0; i < NUM_PLAYERS; i++) {
+            if (trickCards[i] == null) {
+                continue;
+            }
             int priority = trickCards[i].getPriority(trump, suitLead);
             if (priority > maxPriority) {
                 maxPriority = priority;
@@ -208,21 +222,29 @@ public class Hand {
             Player player = players[playerIdx];
 
             boolean dealerIsStuck = playerIdx == dealerIdx;
-            Optional<Suit> calledSuit = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
+            Bid bid = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
 
-            if (calledSuit.isEmpty()) {
+
+            if (bid.getType() == Bid.BidType.PASS || bid.getTrump().isEmpty()) {
                 System.out.println(player.getName() + " did not choose a suit");
                 pause();
                 continue;
             }
-            if (calledSuit.get() == upCard.getSuit()) {
+
+            Suit calledTrump = bid.getTrump().get();
+
+            if (calledTrump == upCard.getSuit()) {
                 throw new RuntimeException("You cannot call the same suit as the up card");
             }
 
-            trump = calledSuit.get();
+            trump = calledTrump;
             callerIdx = playerIdx;
-            System.out.println(player.getName() + " chose " + calledSuit);
+            System.out.println(player.getName() + " chose " + calledTrump);
+            if (bid.isAlone()) {
+                System.out.println(player.getName() + " is going alone");
+            }
             pause();
+            finalBid = bid;
             return;
         }
     }
@@ -237,8 +259,8 @@ public class Hand {
             Player player = players[playerIdx];
             UpcardRecipient upcardRecipient = getUpcardRecipient(playerIdx);
 
-
-            if (player.chooseToOrderUp(upCard, upcardRecipient)) {
+            Bid playerBid = player.chooseToOrderUp(upCard, upcardRecipient);
+            if (playerBid.getType() != Bid.BidType.PASS) {
                 Player dealer = players[dealerIdx];
                 dealer.addCard(upCard);
                 Card dealerDiscardedCard = dealer.chooseDiscard(upCard.getSuit(), Optional.empty(), List.of());
@@ -246,6 +268,7 @@ public class Hand {
                 callerIdx = playerIdx;
                 System.out.println(player.getName() + " ordered up");
                 dealer.removeCard(dealerDiscardedCard);
+                finalBid = playerBid;
                 pause();
                 return Optional.empty();
             }

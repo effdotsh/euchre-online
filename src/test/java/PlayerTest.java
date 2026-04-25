@@ -1,12 +1,13 @@
+import org.example.Bid;
 import org.example.Card;
 import org.example.Players.Player;
 import org.example.Players.RandomAIPlayer;
 import org.example.Players.StrategyAIPlayer;
 import org.example.Rank;
+import org.example.Strategies.StrategyFactory;
+import org.example.Strategies.StrategyType;
 import org.example.Suit;
 import org.example.UpcardRecipient;
-import org.example.strategies.StrategyFactory;
-import org.example.strategies.StrategyType;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -401,11 +402,11 @@ class PlayerTest {
         StrategyAIPlayer player = neutralStrategyPlayer();
         setAggressiveOnlyOrderUpHand(player);
 
-        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertFalse(orderedUp(player, UpcardRecipient.PARTNER));
 
         player.updateScoreContext(2, 6);
 
-        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertTrue(orderedUp(player, UpcardRecipient.PARTNER));
     }
 
     @Test
@@ -413,11 +414,11 @@ class PlayerTest {
         StrategyAIPlayer player = neutralStrategyPlayer();
         setNeutralNotConservativeOrderUpHand(player);
 
-        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertTrue(orderedUp(player, UpcardRecipient.PARTNER));
 
         player.updateScoreContext(8, 4);
 
-        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertFalse(orderedUp(player, UpcardRecipient.PARTNER));
     }
 
     @Test
@@ -426,10 +427,10 @@ class PlayerTest {
         setAggressiveOnlyOrderUpHand(player);
 
         player.updateScoreContext(1, 6);
-        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertTrue(orderedUp(player, UpcardRecipient.PARTNER));
 
         player.updateScoreContext(5, 5);
-        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertFalse(orderedUp(player, UpcardRecipient.PARTNER));
     }
 
     @Test
@@ -439,7 +440,7 @@ class PlayerTest {
 
         player.updateScoreContext(2, 5);
 
-        assertFalse(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertFalse(orderedUp(player, UpcardRecipient.PARTNER));
     }
 
     @Test
@@ -449,7 +450,12 @@ class PlayerTest {
 
         player.updateScoreContext(6, 3);
 
-        assertTrue(player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), UpcardRecipient.PARTNER));
+        assertTrue(orderedUp(player, UpcardRecipient.PARTNER));
+    }
+
+    private boolean orderedUp(StrategyAIPlayer player, UpcardRecipient recipient) {
+        return player.chooseToOrderUp(new Card(Suit.HEARTS, Rank.JACK), recipient).getType()
+                == Bid.BidType.ORDER_UP;
     }
 
     @Test
@@ -477,10 +483,11 @@ class PlayerTest {
         )));
 
 
-        Optional<Suit> called = player.chooseToCallTrump(Suit.HEARTS, true);
+        Bid bid = player.chooseToCallTrump(Suit.HEARTS, true);
 
-        assertTrue(called.isPresent(), "Player should be forced to call a suit");
-        assertNotEquals(Suit.HEARTS, called.get(), "Should not call the forbidden suit");
+        assertEquals(Bid.BidType.CALL_TRUMP, bid.getType(), "Player should be forced to call a suit");
+        assertTrue(bid.getTrump().isPresent(), "Player should be forced to call a suit");
+        assertNotEquals(Suit.HEARTS, bid.getTrump().get(), "Should not call the forbidden suit");
     }
 
     @Test
@@ -494,10 +501,11 @@ class PlayerTest {
                 new Card(Suit.DIAMONDS, Rank.TEN)
         )));
 
-        Optional<Suit> called = player.chooseToCallTrump(Suit.HEARTS, true);
+        Bid bid = player.chooseToCallTrump(Suit.HEARTS, true);
 
-        assertTrue(called.isPresent(), "Player should be forced to call a suit");
-        assertEquals(Suit.SPADES, called.get(), "Should call the best suit (spades with jack and ace)");
+        assertEquals(Bid.BidType.CALL_TRUMP, bid.getType(), "Player should be forced to call a suit");
+        assertTrue(bid.getTrump().isPresent(), "Player should be forced to call a suit");
+        assertEquals(Suit.SPADES, bid.getTrump().get(), "Should call the best suit (spades with jack and ace)");
     }
 
     @Test

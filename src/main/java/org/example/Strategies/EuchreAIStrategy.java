@@ -1,4 +1,4 @@
-package org.example.strategies;
+package org.example.Strategies;
 
 import org.example.Card;
 import org.example.Rank;

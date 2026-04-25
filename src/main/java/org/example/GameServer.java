@@ -5,8 +5,8 @@ import com.sun.net.httpserver.HttpServer;
 import org.example.Players.Player;
 import org.example.Players.RemotePlayer;
 import org.example.Players.StrategyAIPlayer;
-import org.example.strategies.StrategyFactory;
-import org.example.strategies.StrategyType;
+import org.example.Strategies.StrategyFactory;
+import org.example.Strategies.StrategyType;
 
 import java.io.IOException;
 import java.io.InputStream;

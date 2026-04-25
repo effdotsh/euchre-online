@@ -1,5 +1,6 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Suit;
 
@@ -19,19 +20,27 @@ public class CLIPlayer extends Player {
     }
 
     @Override
-    public boolean chooseToOrderUp(Card upCard) {
+    public Bid chooseToOrderUp(Card upCard) {
         System.out.println("Your hand is " + getHand().stream()
                 .map(Card::toString)
                 .collect(Collectors.joining(", ")));
         System.out.println("Do you want to order up?");
-        String YES = "Yes";
-        List<String> options = List.of(YES, "No");
+        String ORDER_UP = "Order up";
+        String ORDER_UP_ALONE = "Order up (go alone)";
+        List<String> options = List.of(ORDER_UP, ORDER_UP_ALONE, "Pass");
         int optionIdx = getChoice(options);
-        return Objects.equals(options.get(optionIdx), YES);
+        String choice = options.get(optionIdx);
+        if (Objects.equals(choice, ORDER_UP)) {
+            return Bid.orderUp(false);
+        }
+        if (Objects.equals(choice, ORDER_UP_ALONE)) {
+            return Bid.orderUp(true);
+        }
+        return Bid.pass();
     }
 
     @Override
-    public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+    public Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
         List<Suit> suitOptions = Arrays.stream(Suit.values()).filter(s -> s != forbiddenSuit).toList();
 
         List<String> suitOptionsStrings = new ArrayList<>(suitOptions.stream().map(Suit::toString).toList());
@@ -43,12 +52,21 @@ public class CLIPlayer extends Player {
 
         int suitIdx = getChoice(suitOptionsStrings);
         if (suitIdx < suitOptions.size()) {
-            return Optional.of(suitOptions.get(suitIdx));
+            Suit calledSuit = suitOptions.get(suitIdx);
+            return Bid.callTrump(calledSuit, askGoingAlone());
         } else if (dealerIsStuck) {
             throw new RuntimeException("The dealer is stuck and must pick a suit");
         }
 
-        return Optional.empty();
+        return Bid.pass();
+    }
+
+    private boolean askGoingAlone() {
+        System.out.println("Do you want to go alone?");
+        String YES = "Yes";
+        List<String> options = List.of(YES, "No");
+        int optionIdx = getChoice(options);
+        return Objects.equals(options.get(optionIdx), YES);
     }
 
     private Card chooseCard(List<Card> cardOptions) {

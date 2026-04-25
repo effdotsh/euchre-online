@@ -1,5 +1,6 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Suit;
 
@@ -28,20 +29,27 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    public synchronized boolean chooseToOrderUp(Card upCard) {
+    public synchronized Bid chooseToOrderUp(Card upCard) {
         pendingAction = PendingAction.orderUp(getHand(), upCard);
         String submission = awaitSubmission();
-        return !PendingAction.PASS.equals(submission);
+        if (PendingAction.PASS.equals(submission)) {
+            return Bid.pass();
+        }
+        return Bid.orderUp(PendingAction.ORDER_UP_ALONE.equals(submission));
     }
 
     @Override
-    public synchronized Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+    public synchronized Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
         pendingAction = PendingAction.callTrump(forbiddenSuit, dealerIsStuck);
         String submission = awaitSubmission();
         if (PendingAction.PASS.equals(submission)) {
-            return Optional.empty();
+            return Bid.pass();
         }
-        return Optional.of(Suit.valueOf(submission));
+        boolean alone = submission.endsWith(PendingAction.ALONE_SUFFIX);
+        String suitName = alone
+                ? submission.substring(0, submission.length() - PendingAction.ALONE_SUFFIX.length())
+                : submission;
+        return Bid.callTrump(Suit.valueOf(suitName), alone);
     }
 
     public synchronized void submit(String value) {
@@ -91,6 +99,8 @@ public class RemotePlayer extends Player {
     ) {
         private static final String PASS = "PASS";
         private static final String ORDER_UP = "ORDER_UP";
+        private static final String ORDER_UP_ALONE = "ORDER_UP_ALONE";
+        private static final String ALONE_SUFFIX = "_ALONE";
 
         private static PendingAction playCard(List<Card> legalCards, Optional<Suit> ledSuit) {
             return new PendingAction(
@@ -107,7 +117,7 @@ public class RemotePlayer extends Player {
         private static PendingAction orderUp(List<Card> hand, Card upCard) {
             return new PendingAction(
                     "order_up",
-                    List.of(ORDER_UP, PASS),
+                    List.of(ORDER_UP, ORDER_UP_ALONE, PASS),
                     List.of(),
                     List.of(),
                     true,
@@ -123,7 +133,7 @@ public class RemotePlayer extends Player {
                     .toList();
             return new PendingAction(
                     "call_trump",
-                    buildAllowedValues(suits, !dealerIsStuck),
+                    buildCallTrumpAllowedValues(suits, !dealerIsStuck),
                     List.of(),
                     suits,
                     !dealerIsStuck,
@@ -132,12 +142,15 @@ public class RemotePlayer extends Player {
             );
         }
 
-        private static List<String> buildAllowedValues(List<String> values, boolean canPass) {
-            if (!canPass) {
-                return values;
+        private static List<String> buildCallTrumpAllowedValues(List<String> suits, boolean canPass) {
+            List<String> allowedValues = new java.util.ArrayList<>();
+            for (String suit : suits) {
+                allowedValues.add(suit);
+                allowedValues.add(suit + ALONE_SUFFIX);
             }
-            List<String> allowedValues = new java.util.ArrayList<>(values);
-            allowedValues.add(PASS);
+            if (canPass) {
+                allowedValues.add(PASS);
+            }
             return List.copyOf(allowedValues);
         }
 
@@ -155,6 +168,8 @@ public class RemotePlayer extends Player {
             snapshot.put("ledSuit", ledSuit);
             snapshot.put("passValue", PASS);
             snapshot.put("orderUpValue", ORDER_UP);
+            snapshot.put("orderUpAloneValue", ORDER_UP_ALONE);
+            snapshot.put("aloneSuffix", ALONE_SUFFIX);
             return snapshot;
         }
     }

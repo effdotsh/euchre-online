@@ -7,7 +7,9 @@ const state = {
     fetchInFlight: false,
     clickTargets: [],
     status: "Connecting to game...",
-    hoveredTarget: null
+    hoveredTarget: null,
+    aloneToggle: false,
+    pendingActionType: null
 };
 
 async function loadSnapshot() {
@@ -169,9 +171,15 @@ async function handlePress(x, y) {
         return;
     }
 
+    if (target.onClick) {
+        target.onClick();
+        return;
+    }
+
     try {
         await submitAction(target.value);
         statusCopy.textContent = "Submitting action...";
+        state.aloneToggle = false;
         await refresh();
     } catch (error) {
         statusCopy.textContent = error.message;
@@ -521,13 +529,18 @@ function drawPendingPopup(p, pending, layout) {
         return;
     }
 
+    if (state.pendingActionType !== pending.type) {
+        state.aloneToggle = false;
+        state.pendingActionType = pending.type;
+    }
+
     p.fill(24, 19, 15, 92);
     p.rect(layout.tableX, layout.tableY, layout.tableW, layout.tableH, 30);
 
     const popupW = layout.mobile ? layout.tableW - 40 : 360;
     const popupH = pending.type === "call_trump"
-        ? (layout.mobile ? 244 : 230)
-        : (layout.mobile ? 180 : 170);
+        ? (layout.mobile ? 286 : 272)
+        : (layout.mobile ? 222 : 212);
     const x = layout.tableX + (layout.tableW - popupW) / 2;
     const y = layout.tableY + (layout.tableH - popupH) / 2;
 
@@ -537,28 +550,33 @@ function drawPendingPopup(p, pending, layout) {
     p.rect(x, y, popupW, popupH, 22);
     p.noStroke();
 
-
-
     if (pending.type === "order_up") {
         p.fill(34, 29, 24);
         p.textSize(24);
         p.text("Order Up?", x + 20, y + 54);
 
+        drawAloneToggle(p, x + popupW - 134, y + 36, 114, 30);
+
         const buttonY = y + popupH - 56;
         const passW = 100;
-        const orderW = 128;
+        const orderW = 144;
         const gap = 12;
         const totalW = passW + orderW + gap;
         const startX = x + popupW - totalW - 20;
 
+        const orderLabel = state.aloneToggle ? "Order up alone" : "Order up";
+        const orderValue = state.aloneToggle ? pending.orderUpAloneValue : pending.orderUpValue;
+
         drawButton(p, startX, buttonY, passW, 38, "Pass", pending.passValue);
-        drawButton(p, startX + passW + gap, buttonY, orderW, 38, "Order up", pending.orderUpValue);
+        drawButton(p, startX + passW + gap, buttonY, orderW, 38, orderLabel, orderValue);
         return;
     }
 
     p.fill(34, 29, 24);
     p.textSize(24);
     p.text("Choose Trump", x + 20, y + 54);
+
+    drawAloneToggle(p, x + popupW - 134, y + 36, 114, 30);
 
     const passX = x + 20;
     const passY = y + 72;
@@ -578,9 +596,50 @@ function drawPendingPopup(p, pending, layout) {
     const buttonY = y + 142;
 
     suitButtons.forEach(suit => {
-        drawSuitButton(p, cursorX, buttonY, circleSize, suit);
+        const submitValue = state.aloneToggle ? suit + pending.aloneSuffix : suit;
+        drawSuitButton(p, cursorX, buttonY, circleSize, suit, submitValue);
         cursorX += circleSize + gap;
     });
+}
+
+function drawAloneToggle(p, x, y, w, h) {
+    const active = state.aloneToggle;
+    p.fill(active ? 220 : 248, active ? 232 : 244, active ? 222 : 238);
+    p.stroke(124, 104, 84, active ? 110 : 48);
+    p.strokeWeight(1.5);
+    p.rect(x, y, w, h, h / 2);
+    p.noStroke();
+
+    const boxSize = 16;
+    const boxX = x + 12;
+    const boxY = y + (h - boxSize) / 2;
+    p.fill(active ? 63 : 255, active ? 111 : 255, active ? 79 : 255);
+    p.stroke(124, 104, 84, 120);
+    p.strokeWeight(1);
+    p.rect(boxX, boxY, boxSize, boxSize, 4);
+    p.noStroke();
+    if (active) {
+        p.fill(255);
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(12);
+        p.text("✓", boxX + boxSize / 2, boxY + boxSize / 2 + 1);
+        p.textAlign(p.LEFT, p.BASELINE);
+    }
+
+    p.fill(33, 28, 24);
+    p.textSize(13);
+    p.text("Go alone", boxX + boxSize + 8, y + h / 2 + 4);
+
+    if (!state.submitting) {
+        addTarget({
+            x,
+            y,
+            w,
+            h,
+            value: "__alone-toggle__",
+            onClick: () => { state.aloneToggle = !state.aloneToggle; }
+        });
+    }
 }
 
 function drawButton(p, x, y, w, h, label, value) {
@@ -617,8 +676,9 @@ function drawBarButton(p, x, y, w, h, label, value) {
     }
 }
 
-function drawSuitButton(p, x, y, size, suit) {
-    const hovered = state.hoveredTarget?.value === suit;
+function drawSuitButton(p, x, y, size, suit, submitValue) {
+    const value = submitValue ?? suit;
+    const hovered = state.hoveredTarget?.value === value;
     const centerX = x + size / 2;
     const centerY = y + size / 2;
 
@@ -635,7 +695,7 @@ function drawSuitButton(p, x, y, size, suit) {
     p.textAlign(p.LEFT, p.BASELINE);
 
     if (!state.submitting) {
-        addTarget({ x, y, w: size, h: size, value: suit });
+        addTarget({ x, y, w: size, h: size, value });
     }
 }
 
