@@ -499,4 +499,20 @@ class PlayerTest {
         assertTrue(called.isPresent(), "Player should be forced to call a suit");
         assertEquals(Suit.SPADES, called.get(), "Should call the best suit (spades with jack and ace)");
     }
+
+    @Test
+    void leftBowerMeansTrumpLegalCards() {
+        StrategyAIPlayer player = neutralStrategyPlayer();
+        player.setHand(new ArrayList<>(List.of(
+                new Card(Suit.SPADES, Rank.ACE),
+                new Card(Suit.HEARTS, Rank.NINE),
+                new Card(Suit.SPADES, Rank.NINE),
+                new Card(Suit.DIAMONDS, Rank.TEN),
+                new Card(Suit.CLUBS, Rank.NINE)
+        )));
+        Card ledCard = new Card(Suit.SPADES, Rank.JACK);
+        Suit trump = Suit.CLUBS;
+        List<Card> legalCards = player.getLegalCards(trump, Optional.of(ledCard.getEffectiveSuit(trump)));
+        assertEquals(legalCards, List.of(new Card(Suit.CLUBS, Rank.NINE)));
+    }
 }
