@@ -217,14 +217,15 @@ public class Hand {
                 continue;
             }
 
-            Suit trump = bid.getTrump().get();
+            Suit calledTrump = bid.getTrump().get();
 
-            if (trump == upCard.getSuit()) {
+            if (calledTrump == upCard.getSuit()) {
                 throw new RuntimeException("You cannot call the same suit as the up card");
             }
 
+            trump = calledTrump;
             callerIdx = playerIdx;
-            System.out.println(player.getName() + " chose " + trump);
+            System.out.println(player.getName() + " chose " + calledTrump);
             pause();
             return;
         }
