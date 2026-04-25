@@ -28,10 +28,6 @@ public class Euchre {
         this(players, 0, true);
     }
 
-    public Euchre(Player[] players, long actionDelayMillis) {
-        this(players, actionDelayMillis, true);
-    }
-
     public Euchre(Player[] players, long actionDelayMillis, boolean stickDealer) {
         this.players = players;
         this.actionDelayMillis = actionDelayMillis;
