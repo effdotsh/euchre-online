@@ -208,20 +208,23 @@ public class Hand {
             Player player = players[playerIdx];
 
             boolean dealerIsStuck = playerIdx == dealerIdx;
-            Optional<Suit> calledSuit = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
+            Bid bid = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
 
-            if (calledSuit.isEmpty()) {
+
+            if (bid.getType() == Bid.BidType.PASS || bid.getTrump().isEmpty()) {
                 System.out.println(player.getName() + " did not choose a suit");
                 pause();
                 continue;
             }
-            if (calledSuit.get() == upCard.getSuit()) {
+
+            Suit trump = bid.getTrump().get();
+
+            if (trump == upCard.getSuit()) {
                 throw new RuntimeException("You cannot call the same suit as the up card");
             }
 
-            trump = calledSuit.get();
             callerIdx = playerIdx;
-            System.out.println(player.getName() + " chose " + calledSuit);
+            System.out.println(player.getName() + " chose " + trump);
             pause();
             return;
         }
@@ -238,7 +241,7 @@ public class Hand {
             UpcardRecipient upcardRecipient = getUpcardRecipient(playerIdx);
 
 
-            if (player.chooseToOrderUp(upCard, upcardRecipient)) {
+            if (player.chooseToOrderUp(upCard, upcardRecipient).getType() == Bid.BidType.ORDER_UP) {
                 Player dealer = players[dealerIdx];
                 dealer.addCard(upCard);
                 Card dealerDiscardedCard = dealer.chooseDiscard(upCard.getSuit(), Optional.empty(), List.of());

@@ -1,4 +1,4 @@
-package org.example.strategies;
+package org.example.Strategies;
 
 import org.example.Card;
 import org.example.Rank;
@@ -10,48 +10,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+public class ConservativeStrategy extends EuchreAIStrategy {
 
-public class AggressiveStrategy extends EuchreAIStrategy {
-
-    private static final double SELF_THRESHOLD = 35.5;
-    private static final double PARTNER_THRESHOLD = 34.0;
-    private static final double OPPONENT_THRESHOLD = 33.0;
+    private static final double SELF_THRESHOLD = 40.0;
+    private static final double PARTNER_THRESHOLD = 42.0;
+    private static final double OPPONENT_THRESHOLD = 43.0;
 
     private static final double VOID_BONUS = 3.0;
-    private static final double OFFSUIT_ACE_POINTS = 8.0;
-    private static final double OFFSUIT_KING_POINTS = 1.0;
+    private static final double OFFSUIT_ACE_POINTS = 6.0;
     private static final double SELF_UPCARD_MULTIPLIER = 1.0;
-    private static final double PARTNER_UPCARD_MULTIPLIER = 0.75;
-    private static final double OPPONENT_UPCARD_MULTIPLIER = 0.45;
-    private static final double ALL_SUITS_PENALTY = 0.0;
+    private static final double PARTNER_UPCARD_MULTIPLIER = 0.70;
+    private static final double OPPONENT_UPCARD_MULTIPLIER = 0.35;
+    private static final double ALL_SUITS_PENALTY = -3.0;
 
-    private static final double RIGHT_BOWER_POINTS = 21.0;
-    private static final double LEFT_BOWER_POINTS = 16.0;
-    private static final double TRUMP_ACE_POINTS = 13.0;
-    private static final double TRUMP_KING_POINTS = 11.0;
-    private static final double TRUMP_QUEEN_POINTS = 10.0;
-    private static final double TRUMP_TEN_POINTS = 9.0;
-    private static final double TRUMP_NINE_POINTS = 8.0;
+    private static final double RIGHT_BOWER_POINTS = 22.0;
+    private static final double LEFT_BOWER_POINTS = 15.0;
+    private static final double TRUMP_ACE_POINTS = 12.0;
+    private static final double TRUMP_KING_POINTS = 10.0;
+    private static final double TRUMP_QUEEN_POINTS = 9.0;
+    private static final double TRUMP_TEN_POINTS = 8.0;
+    private static final double TRUMP_NINE_POINTS = 7.0;
 
     @Override
     public boolean shouldOrderUp(Card upCard, List<Card> hand, UpcardRecipient upcardRecipient) {
         Suit trump = upCard.getSuit();
-
-        if (hasTwoJacks(hand, trump)) {
-            return true;
-        }
-
         int trumpCount = (int) countTrumpCards(hand, trump);
-        if (trumpCount >= 4) {
-            return true;
-        }
 
         double score = scoreTrumpHolding(hand, trump)
                 + scoreOffSuitAces(hand, trump, OFFSUIT_ACE_POINTS)
-                + scoreOffSuitKings(hand, trump)
                 + scoreShortSuits(hand, trump, trumpCount, VOID_BONUS, ALL_SUITS_PENALTY)
                 + scoreUpcardRecipientImpact(upCard, hand, trump, upcardRecipient, SELF_UPCARD_MULTIPLIER, PARTNER_UPCARD_MULTIPLIER, OPPONENT_UPCARD_MULTIPLIER, VOID_BONUS);
-        
+
         return switch (upcardRecipient) {
             case SELF -> score >= SELF_THRESHOLD;
             case PARTNER -> score >= PARTNER_THRESHOLD;
@@ -59,20 +48,8 @@ public class AggressiveStrategy extends EuchreAIStrategy {
         };
     }
 
-    private double scoreOffSuitKings(List<Card> hand, Suit trump) {
-        return hand.stream()
-                .filter(card -> card.getEffectiveSuit(trump) != trump)
-                .filter(card -> card.getRank() == Rank.KING)
-                .count() * OFFSUIT_KING_POINTS;
-    }
-
     @Override
     public Optional<Suit> chooseCallTrump(Suit forbiddenSuit, List<Card> hand) {
-        Optional<Suit> bestTwoJackSuit = bestTwoJackTrumpSuit(forbiddenSuit, hand);
-        if (bestTwoJackSuit.isPresent()) {
-            return bestTwoJackSuit;
-        }
-
         return Arrays.stream(Suit.values())
                 .filter(suit -> suit != forbiddenSuit)
                 .map(suit -> Map.entry(suit, scoreCallTrumpHelper(hand, suit)))
@@ -83,22 +60,8 @@ public class AggressiveStrategy extends EuchreAIStrategy {
 
     @Override
     public Optional<Suit> mustChooseCallTrump(Suit forbiddenSuit, List<Card> hand) {
-        Optional<Suit> bestTwoJackSuit = bestTwoJackTrumpSuit(forbiddenSuit, hand);
-        if (bestTwoJackSuit.isPresent()) {
-            return bestTwoJackSuit;
-        }
-
         return Arrays.stream(Suit.values())
                 .filter(suit -> suit != forbiddenSuit)
-                .map(suit -> Map.entry(suit, scoreCallTrumpHelper(hand, suit)))
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey);
-    }
-
-    private Optional<Suit> bestTwoJackTrumpSuit(Suit forbiddenSuit, List<Card> hand) {
-        return Arrays.stream(Suit.values())
-                .filter(suit -> suit != forbiddenSuit)
-                .filter(suit -> hasTwoJacks(hand, suit))
                 .map(suit -> Map.entry(suit, scoreCallTrumpHelper(hand, suit)))
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey);
@@ -108,8 +71,7 @@ public class AggressiveStrategy extends EuchreAIStrategy {
         int trumpCount = (int) countTrumpCards(hand, trump);
         return scoreTrumpHolding(hand, trump)
                 + scoreOffSuitAces(hand, trump, OFFSUIT_ACE_POINTS)
-                + scoreShortSuits(hand, trump, trumpCount, VOID_BONUS, ALL_SUITS_PENALTY)
-                + scoreOffSuitKings(hand, trump);
+                + scoreShortSuits(hand, trump, trumpCount, VOID_BONUS, ALL_SUITS_PENALTY);
     }
 
     @Override
@@ -133,3 +95,4 @@ public class AggressiveStrategy extends EuchreAIStrategy {
         };
     }
 }
+

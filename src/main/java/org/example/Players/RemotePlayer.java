@@ -1,5 +1,6 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Suit;
 
@@ -28,20 +29,23 @@ public class RemotePlayer extends Player {
     }
 
     @Override
-    public synchronized boolean chooseToOrderUp(Card upCard) {
+    public synchronized Bid chooseToOrderUp(Card upCard) {
         pendingAction = PendingAction.orderUp(getHand(), upCard);
         String submission = awaitSubmission();
-        return !PendingAction.PASS.equals(submission);
+        if (PendingAction.PASS.equals(submission)) {
+            return Bid.pass();
+        }
+        return Bid.orderUp(false);
     }
 
     @Override
-    public synchronized Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+    public synchronized Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
         pendingAction = PendingAction.callTrump(forbiddenSuit, dealerIsStuck);
         String submission = awaitSubmission();
         if (PendingAction.PASS.equals(submission)) {
-            return Optional.empty();
+            return Bid.pass();
         }
-        return Optional.of(Suit.valueOf(submission));
+        return Bid.callTrump(Suit.valueOf(submission), false);
     }
 
     public synchronized void submit(String value) {

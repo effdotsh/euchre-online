@@ -1,5 +1,6 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Suit;
 
@@ -19,7 +20,7 @@ public class CLIPlayer extends Player {
     }
 
     @Override
-    public boolean chooseToOrderUp(Card upCard) {
+    public Bid chooseToOrderUp(Card upCard) {
         System.out.println("Your hand is " + getHand().stream()
                 .map(Card::toString)
                 .collect(Collectors.joining(", ")));
@@ -27,11 +28,14 @@ public class CLIPlayer extends Player {
         String YES = "Yes";
         List<String> options = List.of(YES, "No");
         int optionIdx = getChoice(options);
-        return Objects.equals(options.get(optionIdx), YES);
+        if (Objects.equals(options.get(optionIdx), YES)) {
+            return Bid.orderUp(false);
+        }
+        return Bid.pass();
     }
 
     @Override
-    public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+    public Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
         List<Suit> suitOptions = Arrays.stream(Suit.values()).filter(s -> s != forbiddenSuit).toList();
 
         List<String> suitOptionsStrings = new ArrayList<>(suitOptions.stream().map(Suit::toString).toList());
@@ -43,12 +47,12 @@ public class CLIPlayer extends Player {
 
         int suitIdx = getChoice(suitOptionsStrings);
         if (suitIdx < suitOptions.size()) {
-            return Optional.of(suitOptions.get(suitIdx));
+            return Bid.callTrump(suitOptions.get(suitIdx), false);
         } else if (dealerIsStuck) {
             throw new RuntimeException("The dealer is stuck and must pick a suit");
         }
 
-        return Optional.empty();
+        return Bid.pass();
     }
 
     private Card chooseCard(List<Card> cardOptions) {

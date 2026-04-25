@@ -1,10 +1,11 @@
 package org.example.Players;
 
+import org.example.Bid;
 import org.example.Card;
 import org.example.Rank;
+import org.example.Strategies.*;
 import org.example.Suit;
 import org.example.UpcardRecipient;
-import org.example.strategies.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -271,22 +272,25 @@ public class StrategyAIPlayer extends Player {
     }
 
     @Override
-    public boolean chooseToOrderUp(Card upCard) {
+    public Bid chooseToOrderUp(Card upCard) {
         return chooseToOrderUp(upCard, UpcardRecipient.OPPONENT);
     }
 
     @Override
-    public boolean chooseToOrderUp(Card upCard, UpcardRecipient upcardRecipient) {
-        return strategy.shouldOrderUp(upCard, getHand(), upcardRecipient);
+    public Bid chooseToOrderUp(Card upCard, UpcardRecipient upcardRecipient) {
+        if (strategy.shouldOrderUp(upCard, getHand(), upcardRecipient)) {
+            return Bid.orderUp(false);
+        }
+        return Bid.pass();
     }
 
     @Override
-    public Optional<Suit> chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
-        if (dealerIsStuck) {
-            return strategy.mustChooseCallTrump(forbiddenSuit, getHand());
-        }
+    public Bid chooseToCallTrump(Suit forbiddenSuit, boolean dealerIsStuck) {
+        Optional<Suit> calledSuit = dealerIsStuck
+                ? strategy.mustChooseCallTrump(forbiddenSuit, getHand())
+                : strategy.chooseCallTrump(forbiddenSuit, getHand());
 
-        return strategy.chooseCallTrump(forbiddenSuit, getHand());
+        return calledSuit.map(suit -> Bid.callTrump(suit, false)).orElseGet(Bid::pass);
     }
 
 }
