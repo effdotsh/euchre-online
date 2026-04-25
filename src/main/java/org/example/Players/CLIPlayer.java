@@ -25,11 +25,16 @@ public class CLIPlayer extends Player {
                 .map(Card::toString)
                 .collect(Collectors.joining(", ")));
         System.out.println("Do you want to order up?");
-        String YES = "Yes";
-        List<String> options = List.of(YES, "No");
+        String ORDER_UP = "Order up";
+        String ORDER_UP_ALONE = "Order up (go alone)";
+        List<String> options = List.of(ORDER_UP, ORDER_UP_ALONE, "Pass");
         int optionIdx = getChoice(options);
-        if (Objects.equals(options.get(optionIdx), YES)) {
+        String choice = options.get(optionIdx);
+        if (Objects.equals(choice, ORDER_UP)) {
             return Bid.orderUp(false);
+        }
+        if (Objects.equals(choice, ORDER_UP_ALONE)) {
+            return Bid.orderUp(true);
         }
         return Bid.pass();
     }
@@ -47,12 +52,21 @@ public class CLIPlayer extends Player {
 
         int suitIdx = getChoice(suitOptionsStrings);
         if (suitIdx < suitOptions.size()) {
-            return Bid.callTrump(suitOptions.get(suitIdx), false);
+            Suit calledSuit = suitOptions.get(suitIdx);
+            return Bid.callTrump(calledSuit, askGoingAlone());
         } else if (dealerIsStuck) {
             throw new RuntimeException("The dealer is stuck and must pick a suit");
         }
 
         return Bid.pass();
+    }
+
+    private boolean askGoingAlone() {
+        System.out.println("Do you want to go alone?");
+        String YES = "Yes";
+        List<String> options = List.of(YES, "No");
+        int optionIdx = getChoice(options);
+        return Objects.equals(options.get(optionIdx), YES);
     }
 
     private Card chooseCard(List<Card> cardOptions) {

@@ -168,9 +168,12 @@ public class Hand {
             pause();
         }
 
-        int trickWinnerIdx = 0;
+        int trickWinnerIdx = -1;
         int maxPriority = -1;
         for (int i = 0; i < NUM_PLAYERS; i++) {
+            if (trickCards[i] == null) {
+                continue;
+            }
             int priority = trickCards[i].getPriority(trump, suitLead);
             if (priority > maxPriority) {
                 maxPriority = priority;
