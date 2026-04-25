@@ -1,6 +1,8 @@
 package org.example;
 
 
+import org.example.Players.Player;
+
 import java.util.*;
 
 import static org.example.Euchre.NUM_PLAYERS;
@@ -136,7 +138,8 @@ public class Hand {
         for (int offset = 0; offset < NUM_PLAYERS; offset++) {
             int playerIdx = (leaderIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
-            Card chosenCard = player.playCard(trump, suitLead);
+            List<Player.PlayedCard> alreadyPlayedCards = buildPlayedCardsView(trickCards, playerIdx);
+            Card chosenCard = player.playCard(trump, suitLead, alreadyPlayedCards);
             trickCards[playerIdx] = chosenCard;
 
             if (playerIdx == leaderIdx) {
@@ -164,6 +167,30 @@ public class Hand {
             }
         }
         return trickWinnerIdx;
+    }
+
+    private List<Player.PlayedCard> buildPlayedCardsView(Card[] trickCards, int perspectivePlayerIdx) {
+        List<Player.PlayedCard> playedCards = new ArrayList<>(NUM_PLAYERS - 1);
+        for (int idx = 0; idx < trickCards.length; idx++) {
+            Card playedCard = trickCards[idx];
+            if (playedCard == null) {
+                continue;
+            }
+            playedCards.add(new Player.PlayedCard(
+                    playedCard,
+                    classifyPlayedBy(perspectivePlayerIdx, idx),
+                    idx
+            ));
+        }
+        return List.copyOf(playedCards);
+    }
+
+    private Player.PlayedBy classifyPlayedBy(int perspectivePlayerIdx, int playedByPlayerIdx) {
+        if (perspectivePlayerIdx == playedByPlayerIdx) {
+            return Player.PlayedBy.SELF;
+        }
+        boolean sameTeam = (perspectivePlayerIdx % 2) == (playedByPlayerIdx % 2);
+        return sameTeam ? Player.PlayedBy.PARTNER : Player.PlayedBy.OPPONENT;
     }
 
     private void selectCallerAndTrump() {
@@ -208,12 +235,13 @@ public class Hand {
         for (int offset = 1; offset <= NUM_PLAYERS; offset++) {
             int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
+            UpcardRecipient upcardRecipient = getUpcardRecipient(playerIdx);
 
 
-            if (player.chooseToOrderUp(upCard)) {
+            if (player.chooseToOrderUp(upCard, upcardRecipient)) {
                 Player dealer = players[dealerIdx];
                 dealer.addCard(upCard);
-                Card dealerDiscardedCard = dealer.chooseCard(upCard.getSuit(), Optional.empty());
+                Card dealerDiscardedCard = dealer.chooseDiscard(upCard.getSuit(), Optional.empty(), List.of());
                 trump = upCard.getSuit();
                 callerIdx = playerIdx;
                 System.out.println(player.getName() + " ordered up");
@@ -226,6 +254,13 @@ public class Hand {
 
         }
         return Optional.of(upCard);
+    }
+
+    private UpcardRecipient getUpcardRecipient(int playerIdx) {
+        if (playerIdx == dealerIdx) {
+            return UpcardRecipient.SELF;
+        }
+        return (playerIdx % 2) == (dealerIdx % 2) ? UpcardRecipient.PARTNER : UpcardRecipient.OPPONENT;
     }
 
     public Map<String, Object> snapshot() {
