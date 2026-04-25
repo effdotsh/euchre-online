@@ -41,10 +41,10 @@ public class GameServer {
     private static HostedGame createGame() {
         RemotePlayer remotePlayer = new RemotePlayer("Ephram");
         Player[] players = {
-                new StrategyAIPlayer("Lance Neutral", StrategyFactory.create(StrategyType.NEUTRAL)),
-                new StrategyAIPlayer("Laura Neutral", StrategyFactory.create(StrategyType.NEUTRAL)),
+                new StrategyAIPlayer("Lance", StrategyFactory.create(StrategyType.NEUTRAL)),
+                new StrategyAIPlayer("Laura", StrategyFactory.create(StrategyType.NEUTRAL)),
                 remotePlayer,
-                new StrategyAIPlayer("Olivia Neutral", StrategyFactory.create(StrategyType.NEUTRAL))
+                new StrategyAIPlayer("Olivia", StrategyFactory.create(StrategyType.NEUTRAL))
         };
         return new HostedGame(new Euchre(players, 1200), remotePlayer);
     }
