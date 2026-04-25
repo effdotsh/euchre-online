@@ -95,4 +95,17 @@ public class Card {
     public String toString() {
         return rank.toString() + suit.toString();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj.getClass() != this.getClass()) {
+            return false;
+        }
+        final Card other = (Card) obj;
+        return other.suit == this.suit && other.rank == this.rank;
+    }
 }

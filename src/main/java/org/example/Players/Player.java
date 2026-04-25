@@ -42,7 +42,7 @@ public abstract class Player {
         hand.remove(card);
     }
 
-    public List<Card> getLegalCards(Suit trump, Optional<Suit> ledSuit) {
+    public final List<Card> getLegalCards(Suit trump, Optional<Suit> ledSuit) {
         if (hand.isEmpty()) {
             return List.of();
         }
