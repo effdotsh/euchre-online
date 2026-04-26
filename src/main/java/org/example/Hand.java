@@ -13,6 +13,7 @@ public class Hand {
     private final Player[] players;
     private final Deck deck;
     private final long actionDelayMillis;
+    private final boolean stickDealer;
 
     private int blueTricks = 0;
     private int redTricks = 0;
@@ -32,16 +33,13 @@ public class Hand {
     private final List<Map<String, Object>> completedTricks = new ArrayList<>();
     private Map<String, Object> currentTrick = emptyTrickSnapshot();
 
-    public Hand(Player[] players, int dealerIdx) {
-        this(players, dealerIdx, 0);
-    }
-
-    public Hand(Player[] players, int dealerIdx, long actionDelayMillis) {
+    public Hand(Player[] players, int dealerIdx, long actionDelayMillis, boolean stickDealer) {
         this.players = players;
         this.dealerIdx = dealerIdx;
         this.leaderIdx = (dealerIdx + 1) % NUM_PLAYERS;
         this.deck = Deck.createDeck();
         this.actionDelayMillis = actionDelayMillis;
+        this.stickDealer = stickDealer;
     }
 
 
@@ -66,13 +64,13 @@ public class Hand {
         return complete;
     }
 
-    public boolean isStarted() {
-        return started;
-    }
 
     public void playNextTrick() {
         if (!started) {
             throw new IllegalStateException("Hand must be started before playing tricks");
+        }
+        if (trump == null) {
+            throw new IllegalStateException("Cannot play trick without trump");
         }
         if (complete) {
             return;
@@ -211,9 +209,15 @@ public class Hand {
         Optional<Card> upCard = firstRoundSelectCallerAndTrump();
 
         upCard.ifPresent(this::secondRoundSelectCallerAndTrump);
-        for (Player player : players) {
-            player.sortHand(Optional.of(trump));
+        if (trump != null) {
+            for (Player player : players) {
+                player.sortHand(Optional.of(trump));
+            }
+            return;
         }
+
+        complete = true;
+        scoredPoints = new int[]{0, 0};
     }
 
     private void secondRoundSelectCallerAndTrump(Card upCard) {
@@ -221,7 +225,7 @@ public class Hand {
             int playerIdx = (dealerIdx + offset) % NUM_PLAYERS;
             Player player = players[playerIdx];
 
-            boolean dealerIsStuck = playerIdx == dealerIdx;
+            boolean dealerIsStuck = stickDealer && playerIdx == dealerIdx;
             Bid bid = player.chooseToCallTrump(upCard.getSuit(), dealerIsStuck);
 
 

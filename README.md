@@ -30,6 +30,7 @@ CLI.
       and offsuit aces
 - `Euchre` — the game controller that manages the tricks and the scoring
 - `Hand` — the hand playable logic, keeps track of trump, who called, the tricks taken and so on
+- `GameBuilder` — The builder used to configure and create games of Euchre with different options
 - `Main` — example entry point that prints test output of all random players with a CLI player.
 - `GameServer` — entry point for the local HTTP server that hosts the web UI and game API.
 
@@ -50,8 +51,11 @@ Run unit tests with:
 ./gradlew test
 ```
 
-Testing is over 80 unit tests at this moment with method coverage of non UI classes hovering around 86 percent (TODO
-MAKE THIS 100!)
+Testing is over 90 unit tests at the time of submission with method coverage of non UI methods at around 99 percent.
+There is one ghost method
+that claims to be not covered in StrategyAIPlayer but even after extensive debugging the coverage tool showed no method
+with
+red lines indicating a method that is not covered so we gave up and put this disclaimer here.
 
 ## Design Patterns:
 
@@ -59,9 +63,13 @@ MAKE THIS 100!)
   returns a `List<Card>`). This hides the construction details, makes the deck creation reusable, and simplifies testing
   by keeping creation logic in one place. We also have a simple factory for Strategies called `StrategyFactory`.
 
-- OTHER PATTERN TO BE ANNOUNCED
+- Builder Pattern — `GameBuilder` is used to create any instance of a game where you can place different types of
+  players
+  in different seats and then vary whether or not you want to play with options in euchre like Stick the Dealer. Makes
+  it a lot more
+  loosly coupled to the creation of a game.
 
-- Strategy Pattern (planned) — We have implemented the StrategyAIPlayer which utilizes different strategies described
+- Strategy Pattern — We have implemented the StrategyAIPlayer which utilizes different strategies described
   above.
   The strategies are varied at runtime for each StrategyAIPlayer based on the score that the AI player is either winning
   by or loosing by.
@@ -70,6 +78,9 @@ MAKE THIS 100!)
   keeping the common sequence (choosing a card then removing it from the hand), while deferring the selection logic to
   the `chooseCard` method implemented by subclasses like `AIPlayer` and `HumanPlayer`.
 
+## AI Disclosure:
 
+We utilized AI to do pretty much all front end work in terms of UI. That is located in the src/main/resources path
+and it works quite well when you start to play through the game server.
 
 

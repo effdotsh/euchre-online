@@ -10,6 +10,7 @@ import java.util.Map;
 public class Euchre {
     private final Player[] players;
     private final long actionDelayMillis;
+    private final boolean stickDealer;
 
     public static final int NUM_PLAYERS = 4;
 
@@ -24,12 +25,13 @@ public class Euchre {
     List<Hand> hands = new ArrayList<>();
 
     public Euchre(Player[] players) {
-        this(players, 0);
+        this(players, 0, true);
     }
 
-    public Euchre(Player[] players, long actionDelayMillis) {
+    public Euchre(Player[] players, long actionDelayMillis, boolean stickDealer) {
         this.players = players;
         this.actionDelayMillis = actionDelayMillis;
+        this.stickDealer = stickDealer;
     }
 
     public void playGame() {
@@ -49,7 +51,7 @@ public class Euchre {
         }
         updatePlayersScoreContext();
         dealerIdx = (dealerIdx + 1) % NUM_PLAYERS;
-        Hand hand = new Hand(players, dealerIdx, actionDelayMillis);
+        Hand hand = new Hand(players, dealerIdx, actionDelayMillis, stickDealer);
         hands.add(hand);
         try {
             hand.start();
@@ -121,5 +123,9 @@ public class Euchre {
 
     private boolean isOver() {
         return bluePoints >= POINTS_TO_WIN || redPoints >= POINTS_TO_WIN;
+    }
+
+    public boolean isStickDealer() {
+        return stickDealer;
     }
 }
